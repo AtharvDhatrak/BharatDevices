@@ -1,0 +1,21 @@
+{
+    "configurations": [
+        {
+            "type": "java",
+            "name": "BharatdevicesApplication",
+            "request": "launch",
+            "mainClass": "com.microservice.bharatdevices.BharatdevicesApplication",
+            "projectName": ""
+        },
+        {
+            "type": "java",
+            "name": "Spring Boot-BharatdevicesApplication<bharatdevices>",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "mainClass": "com.microservice.bharatdevices.BharatdevicesApplication",
+            "projectName": "bharatdevices",
+            "args": "",
+            "envFile": "${workspaceFolder}/.env"
+        }
+    ]
+}

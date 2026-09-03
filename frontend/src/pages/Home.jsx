@@ -1,25 +1,29 @@
 import React from 'react';
 import Hero from '../components/Hero';
-import StackedGlass from '../components/StackedGlass';
+import ShopByCategory from '../components/ShopByCategory';
 
 export default function Home() {
   return (
-    <main style={{ width: '100%', minHeight: '100vh' }}>
-      {/* Hero Section Container */}
-      <div className="responsive-container">
+    <main style={{ width: '100%', minHeight: '100vh', overflowX: 'hidden' }}>
+      <div className="home-content">
         <Hero />
+        <ShopByCategory />
       </div>
 
-    <div style={{
-  position: 'relative',
-  display: 'flex',
-  justifyContent: 'center',
-  alignItems: 'center',
-  width: '100%'
-}}>
+      <style>{`
+        .home-content {
+          
+          padding: 0 1.5rem;
+          width: 100%;
+        }
 
-</div>
-      {/* Other homepage sections like Categories or Featured Products can go below */}
+        /* Remove edge gutters on mobile to utilize 100% width */
+        @media (max-width: 768px) {
+          .home-content {
+            padding: 0 0.25rem;
+          }
+        }
+      `}</style>
     </main>
   );
 }

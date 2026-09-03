@@ -1,194 +1,273 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import StackedGlass from './StackedGlass';
 
 export default function Hero() {
   return (
-    <section style={{
-      position: 'relative',
-      padding: '4rem 0 6rem 0',
-      overflow: 'hidden',
-    }}>
-      {/* Soft Ambient Background Glow */}
-      <div style={{
-        position: 'absolute',
-        top: '-5%',
-        left: '5%',
-        width: '450px',
-        height: '450px',
-        borderRadius: '50%',
-        background: 'radial-gradient(circle, rgba(2, 132, 199, 0.22) 0%, rgba(2, 132, 199, 0.05) 50%, transparent 70%)',
-        filter: 'blur(50px)',
-        pointerEvents: 'none',
-        zIndex: 0
-      }} />
+    <section className="hero-section">
+      {/* Background Glow */}
+      <div className="hero-glow" />
 
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
-        gap: '3rem',
-        alignItems: 'center',
-        position: 'relative',
-        zIndex: 1
-      }}>
+      <div className="hero-grid">
         {/* Left Column: Heading & Controls */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-          
-          <div style={{
-            alignSelf: 'flex-start',
-            padding: '0.4rem 1rem',
-            borderRadius: '20px',
-            background: 'rgba(2, 132, 199, 0.15)',
-            border: '1px solid var(--accent-color)',
-            color: 'var(--accent-color)',
-            fontSize: '0.8rem',
-            fontWeight: '700',
-            letterSpacing: '0.05em'
-          }}>
-            ⚡ NEXT-GEN HARDWARE DISTRIBUTION
-          </div>
+        <div className="hero-left">
 
-          <h1 style={{
-            fontSize: 'clamp(2.2rem, 4vw, 3.5rem)',
-            fontWeight: '800',
-            lineHeight: '1.15',
-            color: 'var(--text-primary)',
-            letterSpacing: '-0.02em'
-          }}>
-            Your Trusted Partner in <span style={{
-              background: 'linear-gradient(135deg, #38bdf8 0%, #818cf8 100%)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent'
-            }}>Electronics Solutions</span>
+          <h1 className="hero-title">
+            Your Trusted Partner in{' '}
+            <span className="hero-title-gradient">Electronics Solutions</span>
           </h1>
 
-          <p style={{
-            fontSize: '1.05rem',
-            color: 'var(--text-secondary)',
-            lineHeight: '1.6',
-            maxWidth: '520px'
-          }}>
+          <p className="hero-description">
             Enterprise-grade laptops, CCTV surveillance, custom desktop workstations, and smart peripherals tailored for industry needs.
           </p>
 
           {/* Search Bar Container */}
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            backgroundColor: 'var(--bg-glass)',
-            border: '1px solid var(--border-color)',
-            borderRadius: '12px',
-            padding: '0.5rem 0.5rem 0.5rem 1rem',
-            boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.25)',
-            backdropFilter: 'blur(16px)',
-            maxWidth: '480px'
-          }}>
-            <span style={{ marginRight: '0.75rem', opacity: 0.8 }}>🔍</span>
+          <div className="hero-search-container">
+            <span className="hero-search-icon">🔍</span>
             <input 
               type="text" 
               placeholder="Search processors, cameras, laptops..."
-              style={{
-                width: '100%',
-                background: 'transparent',
-                border: 'none',
-                outline: 'none',
-                color: 'var(--text-primary)',
-                fontSize: '0.95rem',
-                fontFamily: 'inherit'
-              }}
+              className="hero-search-input"
             />
-            <button style={{
-              backgroundColor: 'var(--accent-color)',
-              color: '#fff',
-              border: 'none',
-              padding: '0.65rem 1.25rem',
-              borderRadius: '8px',
-              fontWeight: '600',
-              fontSize: '0.85rem',
-              cursor: 'pointer',
-              whiteSpace: 'nowrap',
-              boxShadow: '0 0 12px var(--accent-glow)'
-            }}>
+            <button className="hero-search-button">
               Search
             </button>
           </div>
 
           {/* Action CTAs Row */}
-          <div style={{ 
-            display: 'flex', 
-            alignItems: 'center', 
-            gap: '1rem', 
-            marginTop: '0.5rem',
-            flexWrap: 'nowrap'
-          }}>
-            <Link to="/products" style={{
-              backgroundColor: 'var(--accent-color)',
-              color: '#fff',
-              padding: '0.75rem 1.75rem',
-              borderRadius: '8px',
-              textDecoration: 'none',
-              fontWeight: '600',
-              fontSize: '0.95rem',
-              boxShadow: '0 0 16px var(--accent-glow)',
-              whiteSpace: 'nowrap',
-              display: 'inline-block'
-            }}>
+          <div className="hero-actions">
+            <Link to="/products" className="cta-btn primary-btn">
               Explore Catalog
             </Link>
-            <Link to="/enquiry" style={{
-              backgroundColor: 'transparent',
-              color: 'var(--text-primary)',
-              border: '1px solid var(--border-color)',
-              padding: '0.75rem 1.75rem',
-              borderRadius: '8px',
-              textDecoration: 'none',
-              fontWeight: '600',
-              fontSize: '0.95rem',
-              whiteSpace: 'nowrap',
-              display: 'inline-block'
-            }}>
+            <Link to="/enquiry" className="cta-btn secondary-btn">
               Request a Quote
             </Link>
-            
-            
           </div>
-
         </div>
 
-        {/* Right Column: Single Reference Static Image Frame */}
-        <div style={{
-          position: 'relative',
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          width: '100%',
-          minHeight: '400px'
-        }}>
-          <div style={{
-            position: 'relative',
-            width: '100%',
-            maxWidth: '500px',
-            borderRadius: '24px',
-            overflow: 'hidden',
-            border: '1px solid var(--border-color)',
-            background: 'linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.01) 100%)',
-            backdropFilter: 'blur(20px)',
-            boxShadow: '0 20px 50px rgba(0,0,0,0.4)',
-            zIndex: 1
-          }}>
+        {/* Right Column: Static Image Frame */}
+        <div className="hero-right">
+          <div className="hero-image-frame">
             <img 
               src="/src/assets/hero-showcase.png" 
               alt="Electronics Solutions Showcase"
-              style={{
-                width: '100%',
-                height: 'auto',
-                display: 'block',
-                objectFit: 'cover'
-              }}
+              className="hero-image"
             />
           </div>
         </div>
       </div>
+
+      <style>{`
+        .hero-section {
+          position: relative;
+          padding: 3rem 0 4rem 0;
+          overflow: hidden;
+        }
+
+        .hero-glow {
+          position: absolute;
+          top: -5%;
+          left: 5%;
+          width: 450px;
+          height: 450px;
+          border-radius: 50%;
+          background: radial-gradient(circle, rgba(2, 132, 199, 0.22) 0%, rgba(2, 132, 199, 0.05) 50%, transparent 70%);
+          filter: blur(50px);
+          pointer-events: none;
+          z-index: 0;
+        }
+
+        .hero-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 3rem;
+  
+  /* Centers items vertically and horizontally inside grid cells */
+  place-items: center; 
+  
+  /* Ensures the grid content centers horizontally if given a max-width */
+  justify-content: center; 
+  
+  position: relative;
+  z-index: 1;
+}
+
+/* Optional: Center inline text and elements inside each grid child */
+.hero-grid > * {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+        .hero-left {
+          display: flex;
+          flex-direction: column;
+          gap: 1.5rem;
+        }
+
+        .hero-badge {
+          align-self: flex-start;
+          padding: 0.4rem 1rem;
+          border-radius: 20px;
+          background: rgba(2, 132, 199, 0.15);
+          border: 1px solid var(--accent-color);
+          color: var(--accent-color);
+          font-size: 0.8rem;
+          font-weight: 700;
+          letter-spacing: 0.05em;
+        }
+
+        .hero-title {
+          font-size: clamp(2rem, 3.5vw, 3.5rem);
+          font-weight: 800;
+          line-height: 1.15;
+          color: var(--text-primary);
+          letter-spacing: -0.02em;
+        }
+
+        .hero-title-gradient {
+          background: linear-gradient(135deg, #38bdf8 0%, #818cf8 100%);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+        }
+
+        .hero-description {
+          font-size: 1.05rem;
+          color: var(--text-secondary);
+          line-height: 1.6;
+          max-width: 520px;
+        }
+
+        .hero-search-container {
+          display: flex;
+          align-items: center;
+          background-color: var(--bg-glass);
+          border: 1px solid var(--border-color);
+          border-radius: 12px;
+          padding: 0.5rem 0.5rem 0.5rem 1rem;
+          backdrop-filter: blur(16px);
+          max-width: 480px;
+          width: 100%;
+        }
+
+        .hero-search-icon {
+          margin-right: 0.75rem;
+          opacity: 0.8;
+        }
+
+        .hero-search-input {
+          width: 100%;
+          background: transparent;
+          border: none;
+          outline: none;
+          color: var(--text-primary);
+          font-size: 0.95rem;
+          font-family: inherit;
+        }
+
+        .hero-search-button {
+          background-color: var(--accent-color);
+          color: #fff;
+          border: none;
+          padding: 0.65rem 1.25rem;
+          border-radius: 8px;
+          font-weight: 600;
+          font-size: 0.85rem;
+          cursor: pointer;
+          white-space: nowrap;
+          box-shadow: 0 0 12px var(--accent-glow);
+        }
+
+        .hero-actions {
+          display: flex;
+          align-items: center;
+          gap: 1rem;
+          margin-top: 0.5rem;
+          flex-wrap: wrap;
+        }
+
+        .cta-btn {
+          padding: 0.75rem 1.75rem;
+          border-radius: 8px;
+          text-decoration: none;
+          font-weight: 600;
+          font-size: 0.95rem;
+          white-space: nowrap;
+          display: inline-block;
+          text-align: center;
+        }
+
+        .primary-btn {
+          background-color: var(--accent-color);
+          color: #fff;
+          box-shadow: 0 0 16px var(--accent-glow);
+        }
+
+        .secondary-btn {
+          background-color: transparent;
+          color: var(--text-primary);
+          border: 1px solid var(--border-color);
+        }
+
+        .hero-right {
+          position: relative;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          width: 100%;
+        }
+
+        .hero-image-frame {
+          position: relative;
+          width: 100%;
+          max-width: 500px;
+          border-radius: 24px;
+          overflow: hidden;
+          border: 1px solid var(--border-color);
+          background: linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.01) 100%);
+          backdrop-filter: blur(20px);
+          box-shadow: 0 20px 50px rgba(0,0,0,0.4);
+          z-index: 1;
+        }
+
+        .hero-image {
+          width: 100%;
+          height: auto;
+          display: block;
+          object-fit: cover;
+        }
+
+        /* Mobile Breakpoint Adjustments */
+        @media (max-width: 768px) {
+          .hero-section {
+            padding: 1.5rem 0 2.5rem 0;
+          }
+
+          .hero-grid {
+            grid-template-columns: 1fr;
+            gap: 2rem;
+          }
+
+          .hero-badge {
+            align-self: center;
+          }
+
+          .hero-left {
+            align-items: center;
+            text-align: center;
+          }
+
+          .hero-actions {
+            width: 100%;
+            justify-content: center;
+          }
+
+          .cta-btn {
+            flex: 1;
+            min-width: 140px;
+          }
+        }
+      `}</style>
     </section>
   );
 }
