@@ -1,81 +1,70 @@
-import React, { useState, useEffect, lazy, Suspense } from 'react';
+import React, { lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
+import TopBar from './components/TopBar';
 import Navbar from './components/Navbar';
+import MobileBottomNav from './components/MobileBottomNav';
+import Footer from './components/Footer';
 
-// Lazy-loaded page components for on-demand bundle loading
 const Home = lazy(() => import('./pages/Home'));
 const Products = lazy(() => import('./pages/Products'));
 const ProductDetail = lazy(() => import('./pages/ProductDetail'));
 const Enquiry = lazy(() => import('./pages/Enquiry'));
 const AdminDashboard = lazy(() => import('./pages/AdminDashboard'));
-const AuthModal = lazy(() => import('./pages/AuthModal')); // Import AuthModal component
+const AdminAddProduct = lazy(() => import('./pages/AdminAddProduct'));
+const AuthModal = lazy(() => import('./pages/AuthModal'));
+const About = lazy(() => import('./pages/About'));
+const Contact = lazy(() => import('./pages/Contact'));
 
-// Minimal loading indicator matched to current theme variables
-const PageLoader = () => (
-  <div style={{
-    display: 'flex',
-    justifyContent: 'center',
-    alignItems: 'center',
-    minHeight: '50vh',
-    color: 'var(--text-secondary)',
-    fontSize: '1rem',
-    fontWeight: '500'
-  }}>
-    <span>Loading content...</span>
+const Loader = () => (
+  <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh', color: '#64748b' }}>
+    Loading...
   </div>
 );
 
-// Inner Layout to handle route-specific layouts (e.g. Fullscreen Auth vs Standard Page Container)
-function MainLayout({ theme, toggleTheme }) {
-  const location = useLocation();
-  const isAuthPage = location.pathname === '/login';
+function Layout() {
+  const { pathname } = useLocation();
+  const isAdmin = pathname.startsWith('/admin');
+  const isLogin = pathname === '/login';
+
+  if (isAdmin || isLogin) {
+    return (
+      <Suspense fallback={<Loader />}>
+        <Routes>
+          <Route path="/login" element={<AuthModal />} />
+          <Route path="/admin/products/add" element={<AdminAddProduct />} />
+          <Route path="/admin/products/edit/:id" element={<AdminAddProduct />} />
+          <Route path="/admin/*" element={<AdminDashboard />} />
+        </Routes>
+      </Suspense>
+    );
+  }
 
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-      {/* Hide Navbar on Login page for full glassmorphic immersion */}
-      {!isAuthPage && <Navbar theme={theme} toggleTheme={toggleTheme} />}
-
-      {isAuthPage ? (
-        // Fullscreen viewport container for AuthModal
-        <main style={{ flex: 1 }}>
-          <Suspense fallback={<PageLoader />}>
-            <Routes>
-              <Route path="/login" element={<AuthModal />} />
-            </Routes>
-          </Suspense>
-        </main>
-      ) : (
-        // Standard Responsive Container for normal store pages
-        <main className="responsive-container" >
-          <Suspense fallback={<PageLoader />}>
-            <Routes>
-              <Route path="/" element={<Home />} />
-              <Route path="/products" element={<Products />} />
-              <Route path="/products/:id" element={<ProductDetail />} />
-              <Route path="/enquiry" element={<Enquiry />} />
-              <Route path="/admin/*" element={<AdminDashboard />} />
-            </Routes>
-          </Suspense>
-        </main>
-      )}
-    </div>
+    <>
+      <TopBar />
+      <Navbar />
+      <div style={{ paddingBottom: 'var(--mobile-nav-height, 0)' }}>
+        <Suspense fallback={<Loader />}>
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/products" element={<Products />} />
+            <Route path="/products/:id" element={<ProductDetail />} />
+            <Route path="/enquiry" element={<Enquiry />} />
+            <Route path="/about" element={<About />} />
+            <Route path="/contact" element={<Contact />} />
+          </Routes>
+        </Suspense>
+      </div>
+      <Footer />
+      <MobileBottomNav />
+    </>
   );
 }
 
 export default function App() {
-  const [theme, setTheme] = useState('dark');
-
-  useEffect(() => {
-    document.documentElement.setAttribute('data-theme', theme);
-  }, [theme]);
-
-  const toggleTheme = () => {
-    setTheme(prev => (prev === 'dark' ? 'light' : 'dark'));
-  };
-
   return (
     <BrowserRouter>
-      <MainLayout theme={theme} toggleTheme={toggleTheme} />
+      <Layout />
     </BrowserRouter>
   );
 }

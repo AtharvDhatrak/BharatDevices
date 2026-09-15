@@ -1,385 +1,240 @@
 import React, { useState } from 'react';
 import { NavLink, Link, useNavigate } from 'react-router-dom';
-import ThemeToggle from './ThemeToggle';
 import logoImg from '../assets/logo.png';
 
-export default function Navbar({ theme, toggleTheme }) {
-  const [authDropdownOpen, setAuthDropdownOpen] = useState(false);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+export default function Navbar() {
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [search, setSearch] = useState('');
   const navigate = useNavigate();
 
-  const handlePortalRedirect = (type) => {
-    setAuthDropdownOpen(false);
-    setMobileMenuOpen(false);
-    if (type === 'admin') {
-      navigate('/login?portal=admin');
-    } else {
-      navigate('/login?portal=user');
+  const navLinks = [
+    { to: '/', label: 'Home', end: true },
+    { to: '/products', label: 'Products' },
+    { to: '/about', label: 'About Us' },
+    { to: '/contact', label: 'Contact' },
+  ];
+
+  const handleSearch = (e) => {
+    e.preventDefault();
+    if (search.trim()) {
+      navigate(`/products?q=${encodeURIComponent(search.trim())}`);
+      setSearch('');
+      setMobileOpen(false);
     }
   };
 
-  const desktopNavLinkStyle = ({ isActive }) => ({
-    color: isActive ? 'var(--bg-surface)' : 'var(--text-secondary)',
-    backgroundColor: isActive ? 'var(--text-primary)' : 'transparent',
+  const linkStyle = ({ isActive }) => ({
+    color: isActive ? '#1d4ed8' : '#374151',
     textDecoration: 'none',
-    fontWeight: '600',
-    fontSize: '0.85rem',
-    padding: '0.45rem 0.9rem',
-    borderRadius: '20px',
+    fontWeight: '500',
+    fontSize: '0.875rem',
+    padding: '0.35rem 0',
+    borderBottom: isActive ? '2px solid #1d4ed8' : '2px solid transparent',
+    transition: 'color 0.2s',
     whiteSpace: 'nowrap',
-    transition: 'all 0.25s ease',
-    display: 'inline-flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-  });
-
-  const mobileNavLinkStyle = ({ isActive }) => ({
-    color: isActive ? 'var(--accent-color)' : 'var(--text-primary)',
-    backgroundColor: isActive ? 'rgba(2, 132, 199, 0.1)' : 'transparent',
-    textDecoration: 'none',
-    fontWeight: '600',
-    fontSize: '1rem',
-    padding: '0.75rem 1rem',
-    borderRadius: '8px',
-    display: 'block',
-    transition: 'all 0.2s ease',
   });
 
   return (
-    <header className="navbar-header">
-      <div className="navbar-container">
-        
-        {/* Brand Logo & Title */}
+    <header className="navbar">
+      <div className="navbar-inner">
         <Link to="/" className="navbar-brand">
-          <img
-            src={logoImg}
-            alt="Bharat Devices Logo"
-            className="navbar-logo-img"
-          />
-          <span className="navbar-brand-text">
-            BHARAT<span style={{ color: 'var(--accent-color)' }}>DEVICES</span>
-          </span>
+          <img src={logoImg} alt="Bharat Devices" className="brand-logo" />
         </Link>
 
-        {/* Desktop Navigation Links (Inline on Laptop/Desktop) */}
-        <nav className="desktop-nav">
-          <NavLink to="/" style={desktopNavLinkStyle}>
-            Home
-          </NavLink>
-          <NavLink to="/products" style={desktopNavLinkStyle}>
-            Products
-          </NavLink>
-          <NavLink to="/categories" style={desktopNavLinkStyle}>
-            Categories
-          </NavLink>
-          <NavLink to="/about" style={desktopNavLinkStyle}>
-            About Us
-          </NavLink>
-          <NavLink to="/enquiry" style={desktopNavLinkStyle}>
-            Enquire
-          </NavLink>
+        <nav className="nav-links">
+          {navLinks.map(l => (
+            <NavLink key={l.to} to={l.to} style={linkStyle} end={l.end}>
+              {l.label}
+            </NavLink>
+          ))}
         </nav>
 
-        {/* Right Side Utility Actions */}
-        <div className="navbar-right-actions">
-          <ThemeToggle theme={theme} toggleTheme={toggleTheme} />
+        <form className="navbar-search" onSubmit={handleSearch}>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+          </svg>
+          <input
+            type="text"
+            placeholder="Search products, brands or keywords..."
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            className="navbar-search-input"
+          />
+        </form>
 
-          {/* Account Portal Dropdown (Desktop view) */}
-          <div className="account-dropdown-container">
-            <button
-              onClick={() => setAuthDropdownOpen(!authDropdownOpen)}
-              className="account-btn"
-            >
-              <span>Account</span>
-              <span
-                style={{
-                  fontSize: '0.65rem',
-                  transform: authDropdownOpen ? 'rotate(180deg)' : 'rotate(0deg)',
-                  transition: 'transform 0.2s',
-                }}
-              >
-                ▼
-              </span>
-            </button>
-
-            {authDropdownOpen && (
-              <div className="account-dropdown-menu">
-                <button
-                  onClick={() => handlePortalRedirect('user')}
-                  className="dropdown-item"
-                >
-                  👤 User Portal
-                </button>
-                <button
-                  onClick={() => handlePortalRedirect('admin')}
-                  className="dropdown-item"
-                >
-                  ⚡ Admin Portal
-                </button>
-              </div>
+        <div className="navbar-actions">
+          <Link to="/enquiry" className="btn-request-quote">Request Quote</Link>
+          <button className="hamburger" onClick={() => setMobileOpen(o => !o)} aria-label="Menu">
+            {mobileOpen ? (
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+              </svg>
+            ) : (
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+              </svg>
             )}
-          </div>
-
-          {/* Hamburger Toggle Button (Mobile/iOS view) */}
-          <button
-            className="hamburger-btn"
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            aria-label="Toggle Navigation Menu"
-          >
-            {mobileMenuOpen ? '✕' : '☰'}
           </button>
         </div>
       </div>
 
-      {/* Mobile Drawer Navigation overlay */}
-      {mobileMenuOpen && (
-        <div className="mobile-drawer">
-          <NavLink
-            to="/"
-            style={mobileNavLinkStyle}
-            onClick={() => setMobileMenuOpen(false)}
-          >
-            Home
-          </NavLink>
-          <NavLink
-            to="/products"
-            style={mobileNavLinkStyle}
-            onClick={() => setMobileMenuOpen(false)}
-          >
-            Products
-          </NavLink>
-          <NavLink
-            to="/categories"
-            style={mobileNavLinkStyle}
-            onClick={() => setMobileMenuOpen(false)}
-          >
-            Categories
-          </NavLink>
-          <NavLink
-            to="/about"
-            style={mobileNavLinkStyle}
-            onClick={() => setMobileMenuOpen(false)}
-          >
-            About Us
-          </NavLink>
-          <NavLink
-            to="/enquiry"
-            style={mobileNavLinkStyle}
-            onClick={() => setMobileMenuOpen(false)}
-          >
-            Enquire
-          </NavLink>
-
-          <hr className="mobile-divider" />
-
-          {/* Account Portal Options for Mobile */}
-          <div className="mobile-account-section">
-            <span className="mobile-account-title">Account Portals</span>
-            <button
-              onClick={() => handlePortalRedirect('user')}
-              className="mobile-portal-btn"
+      {mobileOpen && (
+        <nav className="mobile-nav">
+          {navLinks.map(l => (
+            <NavLink
+              key={l.to}
+              to={l.to}
+              end={l.end}
+              style={({ isActive }) => ({
+                display: 'block',
+                padding: '0.75rem 1.5rem',
+                color: isActive ? '#1d4ed8' : '#374151',
+                fontWeight: '500',
+                textDecoration: 'none',
+                borderBottom: '1px solid #f1f5f9',
+              })}
+              onClick={() => setMobileOpen(false)}
             >
-              👤 User Portal
-            </button>
-            <button
-              onClick={() => handlePortalRedirect('admin')}
-              className="mobile-portal-btn"
-            >
-              ⚡ Admin Portal
-            </button>
+              {l.label}
+            </NavLink>
+          ))}
+          <div style={{ padding: '1rem 1.5rem' }}>
+            <Link to="/enquiry" className="btn-request-quote" style={{ display: 'inline-block' }} onClick={() => setMobileOpen(false)}>
+              Request Quote
+            </Link>
           </div>
-        </div>
+        </nav>
       )}
 
       <style>{`
-        .navbar-header {
-          width: 100%;
-          background-color: var(--bg-surface);
-          border-bottom: 1px solid var(--border-color);
+        .navbar {
+          background: #ffffff;
+          border-bottom: 1px solid #e5e7eb;
           position: sticky;
           top: 0;
           z-index: 100;
-          backdrop-filter: blur(12px);
-          -webkit-backdrop-filter: blur(12px);
+          box-shadow: 0 1px 4px rgba(0,0,0,0.06);
         }
 
-        .navbar-container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 0.5rem 0.85rem; /* Reduced padding */
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.5rem;
-}
-
-.navbar-brand {
-  text-decoration: none;
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  flex-shrink: 1;
-  min-width: 0; /* Prevents flex items from overflowing mobile width */
-}
-
-.navbar-logo-img {
-  width: 24px;
-  height: 24px;
-  object-fit: contain;
-  flex-shrink: 0;
-}
-
-.navbar-brand-text {
-  font-size: 0.95rem; /* Reduced font size for tight layouts */
-  font-weight: 800;
-  color: var(--text-primary);
-  letter-spacing: 0.01em;
-  text-transform: uppercase;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.navbar-right-actions {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  flex-shrink: 0;
-}
-
-.hamburger-btn {
-  display: none;
-  background: transparent;
-  border: none;
-  color: var(--text-primary);
-  font-size: 1.25rem;
-  cursor: pointer;
-  line-height: 1;
-  padding: 0.2rem;
-  flex-shrink: 0;
-}
-
-        .account-dropdown-container {
-          position: relative;
-        }
-
-        .account-btn {
-          background: rgba(255, 255, 255, 0.05);
-          border: 1px solid var(--border-color);
-          color: var(--text-primary);
-          padding: 0.45rem 0.9rem;
-          border-radius: 20px;
-          cursor: pointer;
-          display: inline-flex;
+        .navbar-inner {
+          max-width: 1280px;
+          margin: 0 auto;
+          padding: 0 1.5rem;
+          height: 64px;
+          display: flex;
           align-items: center;
-          gap: 0.35rem;
-          font-size: 0.85rem;
+          gap: 1.5rem;
+        }
+
+        .navbar-brand {
+          display: flex;
+          align-items: center;
+          text-decoration: none;
+          flex-shrink: 0;
+        }
+
+        .brand-logo {
+          height: 44px;
+          width: auto;
+          object-fit: contain;
+        }
+
+        .nav-links {
+          display: flex;
+          align-items: center;
+          gap: 1.5rem;
+          flex-shrink: 0;
+        }
+
+        .navbar-search {
+          display: flex;
+          align-items: center;
+          background: #f8fafc;
+          border: 1px solid #e5e7eb;
+          border-radius: 8px;
+          padding: 0.45rem 0.75rem;
+          gap: 0.5rem;
+          flex: 1;
+          max-width: 380px;
+          transition: border-color 0.2s;
+        }
+
+        .navbar-search:focus-within {
+          border-color: #1d4ed8;
+          background: #fff;
+        }
+
+        .navbar-search-input {
+          flex: 1;
+          min-width: 0;
+          background: transparent;
+          border: none;
+          outline: none;
+          font-size: 0.83rem;
+          color: #374151;
+          font-family: inherit;
+        }
+
+        .navbar-search-input::placeholder { color: #94a3b8; }
+
+        .navbar-actions {
+          display: flex;
+          align-items: center;
+          gap: 0.75rem;
+          flex-shrink: 0;
+          margin-left: auto;
+        }
+
+        .btn-request-quote {
+          background: #1e3a8a;
+          color: #ffffff;
+          border: none;
+          padding: 0.55rem 1.25rem;
+          border-radius: 6px;
+          font-size: 0.875rem;
           font-weight: 600;
+          cursor: pointer;
+          text-decoration: none;
+          display: inline-block;
+          transition: background 0.2s;
           white-space: nowrap;
         }
 
-        .account-dropdown-menu {
-          position: absolute;
-          right: 0;
-          top: calc(100% + 8px);
-          width: 160px;
-          background-color: var(--bg-surface);
-          border: 1px solid var(--border-color);
-          border-radius: 14px;
-          box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
-          padding: 0.4rem;
-          display: flex;
-          flex-direction: column;
-          gap: 0.2rem;
-          z-index: 110;
-        }
+        .btn-request-quote:hover { background: #1d4ed8; }
 
-        .dropdown-item {
+        .hamburger {
+          display: none;
           background: none;
-          border: none;
-          color: var(--text-primary);
-          padding: 0.5rem 0.75rem;
-          text-align: left;
+          border: 1px solid #e5e7eb;
           border-radius: 8px;
+          padding: 0.4rem 0.5rem;
           cursor: pointer;
-          font-size: 0.8rem;
-          font-weight: 500;
+          color: #374151;
+          align-items: center;
+          justify-content: center;
         }
 
-        .dropdown-item:hover {
-          background-color: rgba(255, 255, 255, 0.08);
+        .mobile-nav {
+          background: #ffffff;
+          border-top: 1px solid #e5e7eb;
+          box-shadow: 0 4px 12px rgba(0,0,0,0.08);
         }
 
-        .hamburger-btn {
-          display: none;
-          background: transparent;
-          border: none;
-          color: var(--text-primary);
-          font-size: 1.4rem;
-          cursor: pointer;
-          line-height: 1;
-          padding: 0.25rem;
+        @media (max-width: 1024px) {
+          .nav-links { gap: 1rem; }
+          .navbar-search { max-width: 240px; }
         }
 
-        .mobile-drawer {
-          display: none;
-          flex-direction: column;
-          gap: 0.4rem;
-          padding: 1rem 1.5rem 1.5rem 1.5rem;
-          background-color: var(--bg-surface);
-          border-bottom: 1px solid var(--border-color);
+        @media (max-width: 900px) {
+          .nav-links { display: none; }
+          .navbar-search { display: none; }
+          .hamburger { display: flex; }
+          .navbar-inner { gap: 1rem; }
         }
 
-        .mobile-divider {
-          border: none;
-          border-top: 1px solid var(--border-color);
-          margin: 0.5rem 0;
-        }
-
-        .mobile-account-section {
-          display: flex;
-          flex-direction: column;
-          gap: 0.5rem;
-        }
-
-        .mobile-account-title {
-          font-size: 0.75rem;
-          font-weight: 700;
-          color: var(--text-secondary);
-          text-transform: uppercase;
-          letter-spacing: 0.05em;
-          margin-bottom: 0.2rem;
-        }
-
-        .mobile-portal-btn {
-          background: rgba(255, 255, 255, 0.05);
-          border: 1px solid var(--border-color);
-          color: var(--text-primary);
-          padding: 0.65rem 1rem;
-          border-radius: 8px;
-          text-align: left;
-          font-size: 0.9rem;
-          font-weight: 600;
-          cursor: pointer;
-        }
-
-        /* Mobile & Tablet Breakpoint (< 868px) */
-        @media (max-width: 868px) {
-          .desktop-nav {
-            display: none;
-          }
-
-          .account-dropdown-container {
-            display: none;
-          }
-
-          .hamburger-btn {
-            display: block;
-          }
-
-          .mobile-drawer {
-            display: flex;
-          }
+        @media (max-width: 480px) {
+          .navbar-inner { padding: 0 1rem; height: 56px; }
+          .brand-logo { height: 36px; }
         }
       `}</style>
     </header>

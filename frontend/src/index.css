@@ -11,13 +11,13 @@
 
 /* --- 2. Theme Tokens & Responsive Variables --- */
 :root {
-  --bg-primary: #090d16;
-  --bg-surface: #0f172a;
-  --text-primary: #f8fafc;
-  --text-secondary: #94a3b8;
-  --border-color: #1e293b;
-  --accent-color: #0284c7;
-  --accent-glow: rgba(2, 132, 199, 0.4);
+  --bg-primary: #f8fafc;
+  --bg-surface: #ffffff;
+  --text-primary: #1e293b;
+  --text-secondary: #64748b;
+  --border-color: #e5e7eb;
+  --accent-color: #1d4ed8;
+  --accent-glow: rgba(29, 78, 216, 0.2);
 
   /* Dynamic Fluid Typography & Spacing */
   --font-h1: clamp(1.75rem, 4vw, 2.75rem);
@@ -26,23 +26,16 @@
   --section-padding: clamp(1.5rem, 4vw, 3rem);
 }
 
-/* Light Theme Override */
-[data-theme="light"] {
-  --bg-primary: #f8fafc;
-  --bg-surface: #ffffff;
-  --text-primary: #0f172a;
-  --text-secondary: #475569;
-  --border-color: #e2e8f0;
-  --accent-color: #0284c7;
-  --accent-glow: rgba(2, 132, 199, 0.2);
+@media (max-width: 900px) {
+  :root { --mobile-nav-height: 62px; }
 }
 
 /* --- 3. Body & Root Fixes --- */
 html, body, #root {
   width: 100%;
   min-height: 100vh;
-  background-color: var(--bg-primary);
-  color: var(--text-primary);
+  background-color: #f8fafc;
+  color: #1e293b;
   font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   font-size: var(--font-body);
   -webkit-font-smoothing: antialiased;
