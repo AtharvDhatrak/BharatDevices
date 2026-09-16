@@ -32,6 +32,7 @@ function Layout() {
         <Routes>
           <Route path="/login" element={<AuthModal />} />
           <Route path="/admin/products/add" element={<AdminAddProduct />} />
+          <Route path="/admin/add-product" element={<AdminAddProduct />} />
           <Route path="/admin/products/edit/:id" element={<AdminAddProduct />} />
           <Route path="/admin" element={<AdminDashboard />} />
           <Route path="/admin/:tab/*" element={<AdminDashboard />} />
