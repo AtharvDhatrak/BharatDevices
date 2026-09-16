@@ -2,10 +2,13 @@ package com.microservice.bharatdevices.Model;
 
 import java.util.ArrayList;
 import java.util.List;
-
 import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
 
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class MenuDTO {
 
     private Long id;
@@ -17,20 +20,4 @@ public class MenuDTO {
     private Integer displayOrder;
     private String visibleTo;
     private List<MenuDTO> children = new ArrayList<>();
-
-    public MenuDTO() {
-    }
-
-    public MenuDTO(Long id, Long parentId, String title, String slug, String path, String icon, Integer displayOrder, String visibleTo, List<MenuDTO> children) {
-        this.id = id;
-        this.parentId = parentId;
-        this.title = title;
-        this.slug = slug;
-        this.path = path;
-        this.icon = icon;
-        this.displayOrder = displayOrder;
-        this.visibleTo = visibleTo;
-        this.children = children;
-    }
-
 }

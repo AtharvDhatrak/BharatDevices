@@ -33,7 +33,8 @@ function Layout() {
           <Route path="/login" element={<AuthModal />} />
           <Route path="/admin/products/add" element={<AdminAddProduct />} />
           <Route path="/admin/products/edit/:id" element={<AdminAddProduct />} />
-          <Route path="/admin/*" element={<AdminDashboard />} />
+          <Route path="/admin" element={<AdminDashboard />} />
+          <Route path="/admin/:tab/*" element={<AdminDashboard />} />
         </Routes>
       </Suspense>
     );
