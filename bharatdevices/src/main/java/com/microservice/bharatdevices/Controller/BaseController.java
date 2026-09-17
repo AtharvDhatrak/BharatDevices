@@ -8,6 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import com.microservice.bharatdevices.Model.MenuDTO;
+import com.microservice.bharatdevices.Model.ProductSaveRequest;
 import com.microservice.bharatdevices.Services.BaseService;
 import java.util.HashMap;
 import java.util.List;
@@ -44,6 +45,79 @@ public class BaseController {
             errorResponse.put("message", "Failed to retrieve navigation menus");
             log.info("Exiting Base Controller ---> getMenusByRole with and error {}", e.getMessage());
             return ResponseEntity.internalServerError().body(errorResponse);
+        }
+    }
+@GetMapping("/getCategories")
+    public ResponseEntity<Map<String, Object>> getAllCategories() {
+        log.info("Entering BaseController ---> getAllCategories");
+        try {
+            List<?> categories = baseService.getAllCategories();
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("data", categories);
+            log.info("Successfully returned {} categories", categories.size());
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            log.error("Error fetching category schemas: ", e);
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("success", false);
+            errorResponse.put("message", e.getMessage());
+            return ResponseEntity.internalServerError().body(errorResponse);
+        }
+    }
+
+    @PostMapping("/saveCategory")
+    public ResponseEntity<Map<String, Object>> saveCategorySchema(@RequestBody Map<String, Object> payload) {
+        log.info("Entering BaseController ---> saveCategorySchema for ID: {}", payload.get("id"));
+        try {
+            Object savedCategory = baseService.saveCategory(payload);
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("data", savedCategory);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            log.error("Error saving category schema: ", e);
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("success", false);
+            errorResponse.put("message", e.getMessage());
+            return ResponseEntity.internalServerError().body(errorResponse);
+        }
+    }
+
+    @PostMapping("/saveProduct")
+    public ResponseEntity<Map<String, Object>> saveProduct(@RequestBody ProductSaveRequest payload) {
+        log.info("Entering BaseController ---> saveProduct for title: {}", payload.getName());
+        try {
+            Object savedProduct = baseService.saveProduct(payload);
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("message", "Product and variants saved successfully");
+            response.put("data", savedProduct);
+            log.info("Successfully saved product: {}", payload.getName());
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            log.error("Error saving product: ", e);
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("success", false);
+            errorResponse.put("message", e.getMessage());
+            return ResponseEntity.internalServerError().body(errorResponse);
+        }
+    }
+
+   @GetMapping("/getProducts")
+    public ResponseEntity<Map<String, Object>> getProducts() {
+        Map<String, Object> response = new HashMap<>();
+        try {
+            // Controller calls Service (NOT DAO)
+            List<Map<String, Object>> products = baseService.getProductsService();
+            
+            response.put("success", true);
+            response.put("data", products);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            response.put("success", false);
+            response.put("message", e.getMessage());
+            return ResponseEntity.internalServerError().body(response);
         }
     }
 }

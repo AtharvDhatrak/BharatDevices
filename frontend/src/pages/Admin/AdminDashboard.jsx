@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation, Routes, Route } from "react-router-dom";
-import httpService from "../services/httpService";
-import Sidebar from "../components/Sidebar"; // Imported standalone component
+import httpService from "../../services/httpService";
+import Sidebar from "./AdminSidebar"; // Imported standalone component
 
 const DashboardHome = () => (
   <div style={{ color: "#f8fafc" }}>
