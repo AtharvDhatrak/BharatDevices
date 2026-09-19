@@ -12,4 +12,5 @@ public interface BaseService {
     public Object saveCategory(Map<String, Object> payload);
     public Object saveProduct(ProductSaveRequest request) throws Exception;
     public List<Map<String, Object>> getProductsService();
+    
 }

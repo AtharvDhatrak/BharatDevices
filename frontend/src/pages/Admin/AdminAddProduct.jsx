@@ -22,7 +22,6 @@ export default function AdminAddProduct() {
   const navigate = useNavigate();
   const location = useLocation();
   const { isDarkMode } = useTheme();
-
   const isEdit = Boolean(id);
   const existingProduct = location.state?.editProduct || null;
 
@@ -53,7 +52,7 @@ export default function AdminAddProduct() {
   const [uploading, setUploading] = useState(false);
   const [categoriesList, setCategoriesList] = useState([]);
 
-  /* Fetch sidebar nav items and categories */
+  /* Fetch sidebar nav items and categories using httpService */
   useEffect(() => {
     let mounted = true;
     const fetchMetadata = async () => {
@@ -73,10 +72,15 @@ export default function AdminAddProduct() {
           }
           if (catRes.status === 'fulfilled') {
             const catData = catRes.value?.data?.data || catRes.value?.data || [];
-            if (Array.isArray(catData)) setCategoriesList(catData);
+            if (Array.isArray(catData)) {
+              setCategoriesList(catData);
+            } else if (catData && typeof catData === 'object') {
+              setCategoriesList(Object.values(catData));
+            }
           }
         }
-      } catch {
+      } catch (err) {
+        console.error("Failed to fetch metadata", err);
         if (mounted) setNavItems([]);
       } finally {
         if (mounted) setNavLoading(false);
@@ -86,7 +90,7 @@ export default function AdminAddProduct() {
     return () => { mounted = false; };
   }, []);
 
-  /* Form states mapped cleanly to handle all backend variations */
+  /* Form states mapped cleanly */
   const [basic, setBasic] = useState({
     name: productData?.name || productData?.title || '',
     sku: productData?.sku || productData?.product_id || '',
@@ -101,27 +105,44 @@ export default function AdminAddProduct() {
       : (typeof productData?.tags === 'string' ? productData.tags : ''),
   });
 
+  // Robust Initializer for Specs supporting all JSON formats / object variations
   const [specs, setSpecs] = useState(() => {
-    let sourceSpecs = productData?.specs || productData?.specifications;
+    let sourceSpecs = productData?.specs || productData?.specifications || existingProduct?.specs || existingProduct?.specifications;
+    
     if (typeof sourceSpecs === 'string') {
       try { sourceSpecs = JSON.parse(sourceSpecs); } catch { sourceSpecs = {}; }
     }
 
-    // Filter out unwanted metadata properties if present from corrupt db structures
     if (sourceSpecs && typeof sourceSpecs === 'object') {
+      if (sourceSpecs.value && typeof sourceSpecs.value === 'string') {
+        try { sourceSpecs = JSON.parse(sourceSpecs.value); } catch {}
+      } else if (sourceSpecs.value && typeof sourceSpecs.value === 'object') {
+        sourceSpecs = sourceSpecs.value;
+      }
+
       delete sourceSpecs.type;
-      delete sourceSpecs.value;
       delete sourceSpecs.null;
+
+      if (Array.isArray(sourceSpecs)) {
+        return sourceSpecs.map((s, idx) => ({
+          id: s.id || idx + 1,
+          key: s.key || s.name || '',
+          value: s.value !== undefined ? s.value : '',
+          type: s.type || (Array.isArray(s.value) ? 'multiselect' : 'text'),
+          options: s.options || [],
+          isVariant: s.isVariant || false
+        }));
+      }
 
       const entries = Object.entries(sourceSpecs);
       if (entries.length > 0) {
-        return entries.map(([k, v]) => ({
+        return entries.map(([k, v], idx) => ({
           key: k,
           value: v,
           type: Array.isArray(v) ? 'multiselect' : 'text',
           options: Array.isArray(v) ? v : [],
           isVariant: false,
-          id: Math.random()
+          id: idx + 1
         }));
       }
     }
@@ -160,7 +181,7 @@ export default function AdminAddProduct() {
     supportType: productData?.supportType || '',
   });
 
-  // Re-populate state if productData arrives asynchronously via direct API call
+  // Re-populate state asynchronously when productData arrives
   useEffect(() => {
     if (productData) {
       setBasic({
@@ -174,7 +195,7 @@ export default function AdminAddProduct() {
         detailedDescription: productData.detailedDescription || productData.description || productData.detailed_description || '',
         tagsInput: Array.isArray(productData.tags) 
           ? productData.tags.join(', ') 
-          : (typeof productData.tags === 'string' ? productData.tags : ''),
+          : (typeof productData.tags === 'string' ? (productData.tags.startsWith('[') ? JSON.parse(productData.tags).join(', ') : productData.tags) : ''),
       });
 
       let rawSpecs = productData.specs || productData.specifications;
@@ -182,21 +203,58 @@ export default function AdminAddProduct() {
         try { rawSpecs = JSON.parse(rawSpecs); } catch { rawSpecs = {}; }
       }
       if (rawSpecs && typeof rawSpecs === 'object') {
-        delete rawSpecs.type;
-        delete rawSpecs.value;
-        delete rawSpecs.null;
-        const entries = Object.entries(rawSpecs);
-        if (entries.length > 0) {
-          setSpecs(entries.map(([k, v]) => ({
-            key: k, value: v, type: Array.isArray(v) ? 'multiselect' : 'text', options: Array.isArray(v) ? v : [], isVariant: false, id: Math.random()
+        if (rawSpecs.value) {
+          try { rawSpecs = typeof rawSpecs.value === 'string' ? JSON.parse(rawSpecs.value) : rawSpecs.value; } catch {}
+        }
+
+        if (Array.isArray(rawSpecs)) {
+          setSpecs(rawSpecs.map((s, idx) => ({
+            id: s.id || idx + 1,
+            key: s.key || s.name || '',
+            value: s.value !== undefined ? s.value : '',
+            type: s.type || (Array.isArray(s.value) ? 'multiselect' : 'text'),
+            options: s.options || [],
+            isVariant: s.isVariant || false
           })));
+        } else {
+          const entries = Object.entries(rawSpecs);
+          if (entries.length > 0) {
+            setSpecs(entries.map(([k, v], idx) => ({
+              key: k,
+              value: v,
+              type: Array.isArray(v) ? 'multiselect' : 'text',
+              options: Array.isArray(v) ? v : [],
+              isVariant: false,
+              id: idx + 1
+            })));
+          }
         }
       }
 
-      if (productData.variants) setVariants(productData.variants);
+      if (productData.variants && Array.isArray(productData.variants)) {
+        const parsedVariants = productData.variants.map(v => {
+          let combo = v.combination;
+          if (combo && typeof combo === 'object' && combo.value) {
+            try { combo = typeof combo.value === 'string' ? JSON.parse(combo.value) : combo.value; } catch { combo = {}; }
+          } else if (typeof combo === 'string') {
+            try { combo = JSON.parse(combo); } catch { combo = {}; }
+          }
+
+          let vImages = v.imageUrls;
+          if (vImages && typeof vImages === 'object' && vImages.value) {
+            try { vImages = typeof vImages.value === 'string' ? JSON.parse(vImages.value) : vImages.value; } catch { vImages = []; }
+          }
+
+          return { ...v, combination: combo, imageUrls: vImages };
+        });
+        setVariants(parsedVariants);
+      }
       
-      const loadedImages = productData.image_urls || productData.imageUrls || productData.generalImages || [];
-      if (loadedImages.length > 0) {
+      let loadedImages = productData.image_urls || productData.imageUrls || productData.generalImages || [];
+      if (loadedImages && typeof loadedImages === 'object' && loadedImages.value) {
+        try { loadedImages = typeof loadedImages.value === 'string' ? JSON.parse(loadedImages.value) : loadedImages.value; } catch { loadedImages = []; }
+      }
+      if (Array.isArray(loadedImages) && loadedImages.length > 0) {
         setMedia(m => ({ ...m, generalImages: loadedImages }));
       }
 
@@ -207,8 +265,8 @@ export default function AdminAddProduct() {
 
       setPricing(p => ({
         ...p,
-        price: productData.price || productData.base_price || p.price,
-        availableUnits: productData.availableUnits || productData.stock || p.availableUnits
+        price: productData.price ?? productData.base_price ?? p.price,
+        availableUnits: productData.availableUnits ?? productData.stock ?? p.availableUnits
       }));
     }
   }, [productData]);
@@ -291,11 +349,12 @@ export default function AdminAddProduct() {
     setBasic(b => ({ ...b, category: selectedCategoryName }));
     if (errorMessage && selectedCategoryName) setErrorMessage('');
     
-    const foundCat = categoriesList.find(c => 
-      (c.name || c.categoryName) === selectedCategoryName || c.id === selectedCategoryName
-    );
+    const foundCat = categoriesList.find(c => {
+      const cName = (typeof c === 'string' ? c : (c.name || c.categoryName || c.id || '')).toLowerCase();
+      return cName === selectedCategoryName.toLowerCase();
+    });
 
-    if (foundCat && Array.isArray(foundCat.specDefinitions) && !isEdit) {
+    if (foundCat && typeof foundCat === 'object' && Array.isArray(foundCat.specDefinitions) && !isEdit) {
       const dynamicSpecs = foundCat.specDefinitions.map((def, idx) => ({
         id: idx + 1,
         key: def.label || def.key,
@@ -318,7 +377,7 @@ export default function AdminAddProduct() {
   const buildProduct = () => ({
     ...(isEdit && productData?.id ? { id: productData.id } : {}),
     ...basic,
-    title: basic.name, // Support both backend property variations
+    title: basic.name,
     tags: basic.tagsInput ? basic.tagsInput.split(',').map(t => t.trim()).filter(Boolean) : [],
     specs: Object.fromEntries(specs.filter(s => s.key).map(s => [s.key, s.value])),
     specifications: Object.fromEntries(specs.filter(s => s.key).map(s => [s.key, s.value])),
@@ -565,9 +624,10 @@ export default function AdminAddProduct() {
                     <label style={styles.label}>Category <span style={styles.required}>*</span></label>
                     <select style={styles.input} value={basic.category} onChange={e => handleCategoryChange(e.target.value)}>
                       <option value="">Select category</option>
-                      {categoriesList.map(c => {
-                        const catName = c.name || c.categoryName || c.id;
-                        return <option key={c.id || catName} value={catName}>{catName}</option>;
+                      {categoriesList.map((c, idx) => {
+                        const catVal = typeof c === 'string' ? c : (c.id || c.name || c.categoryName);
+                        const catLabel = typeof c === 'string' ? c : (c.name || c.categoryName || c.id);
+                        return <option key={c.id || idx} value={catVal}>{catLabel}</option>;
                       })}
                     </select>
                   </div>

@@ -120,7 +120,7 @@ public class BaseDaoImpl implements BaseDao {
         }
     }
 
-    @Override
+   @Override
 public void insertProduct(UUID productId, ProductSaveRequest request) throws JsonProcessingException {
     // 1. Serialize Specs
     String specsJson = objectMapper.writeValueAsString(request.getSpecs() != null ? request.getSpecs() : Map.of());
@@ -128,21 +128,32 @@ public void insertProduct(UUID productId, ProductSaveRequest request) throws Jso
     // 2. Serialize General Image URLs
     String imagesJson = objectMapper.writeValueAsString(request.getImageUrls() != null ? request.getImageUrls() : List.of());
 
+    // 3. Serialize Tags as JSONB
+    String tagsJson = objectMapper.writeValueAsString(request.getTags() != null ? request.getTags() : List.of());
+
     String normalizedCategory = request.getCategory() != null ? request.getCategory().toLowerCase() : null;
 
-    // Added image_urls to the query
-    String insertProductQuery = "INSERT INTO public.products (id, title, brand, category_id, specifications, image_urls) VALUES (?, ?, ?, ?, ?::jsonb, ?::jsonb)";
+    String insertProductQuery = "INSERT INTO public.products " +
+        "(id, title, sku, brand, model_number, category_id, sub_category, short_description, detailed_description, slug, specifications, image_urls, tags) " +
+        "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?::jsonb, ?::jsonb, ?::jsonb)";
     
     try {
         jdbcTemplate.update(insertProductQuery,
                 productId,
                 request.getName(),
+                request.getSku(),
                 request.getBrand(),
+                request.getModelNumber(),
                 normalizedCategory,
+                request.getSubCategory(),
+                request.getShortDescription(),
+                request.getDetailedDescription(),
+                request.getSlug(),
                 specsJson,
-                imagesJson // <-- Passed as JSONB
+                imagesJson,
+                tagsJson
         );
-        log.info("Successfully inserted product with images into database, ID: {}", productId);
+        log.info("Successfully inserted product with all details into database, ID: {}", productId);
     } catch (Exception e) {
         log.error("Database insertion failed for product ID {}: {}", productId, e.getMessage(), e);
         throw new RuntimeException("Database error during product insertion: " + e.getMessage(), e);
@@ -178,31 +189,40 @@ public void insertVariant(UUID productId, UUID variantId, ProductSaveRequest.Var
 }
 
 
-    @Override 
+   @Override 
 public List<Map<String, Object>> fetchProductsFromDatabase() {
-    // Join products with product_variants to pull variant specifications, pricing, and stock
-    String sql = "SELECT p.id as product_id, p.title, p.brand, p.category_id, p.specifications, p.image_urls,p.created_at, " +
+    String sql = "SELECT p.id as product_id, p.title, p.sku, p.brand, p.model_number, p.category_id, p.sub_category, " +
+                 "p.short_description, p.detailed_description, p.slug, p.specifications, p.image_urls, p.tags, p.created_at, " +
                  "v.id as variant_id, v.sku as variant_sku, v.variant_attributes, v.wholesale_price, v.stock_quantity, v.image_urls as variant_images " +
                  "FROM products p LEFT JOIN product_variants v ON p.id = v.product_id";
 
     List<Map<String, Object>> flatRows = jdbcTemplate.queryForList(sql);
     
-    // Group flat SQL rows by product_id so variants are nested inside an array
     Map<String, Map<String, Object>> productMap = new LinkedHashMap<>();
 
     for (Map<String, Object> row : flatRows) {
         String productId = String.valueOf(row.get("product_id"));
 
-        productMap.putIfAbsent(productId, new HashMap<>(Map.of(
-            "id", productId,
-            "title", row.get("title"),
-            "brand", row.get("brand"),
-            "category_id", row.get("category_id"),
-            "specifications", row.get("specifications"),
-            "image_urls", row.get("image_urls"),
-            "created_at", row.get("created_at"),
-            "variants", new ArrayList<Map<String, Object>>()
-        )));
+        // Use standard HashMap to avoid Map.of() size limits and null pointer exceptions
+        productMap.putIfAbsent(productId, new HashMap<String, Object>() {{
+            put("id", productId);
+            put("title", row.get("title") != null ? row.get("title") : "");
+            put("name", row.get("title") != null ? row.get("title") : "");
+            put("sku", row.get("sku") != null ? row.get("sku") : "");
+            put("brand", row.get("brand") != null ? row.get("brand") : "");
+            put("modelNumber", row.get("model_number") != null ? row.get("model_number") : "");
+            put("category", row.get("category_id") != null ? row.get("category_id") : "");
+            put("subCategory", row.get("sub_category") != null ? row.get("sub_category") : "");
+            put("shortDescription", row.get("short_description") != null ? row.get("short_description") : "");
+            put("detailedDescription", row.get("detailed_description") != null ? row.get("detailed_description") : "");
+            put("slug", row.get("slug") != null ? row.get("slug") : "");
+            put("tags", row.get("tags") != null ? row.get("tags") : List.of());
+            put("specifications", row.get("specifications"));
+            put("specs", row.get("specifications"));
+            put("image_urls", row.get("image_urls") != null ? row.get("image_urls") : List.of());
+            put("created_at", row.get("created_at"));
+            put("variants", new ArrayList<Map<String, Object>>());
+        }});
 
         // If a variant exists for this row, add it to the product's variants list
         if (row.get("variant_id") != null) {
@@ -210,7 +230,7 @@ public List<Map<String, Object>> fetchProductsFromDatabase() {
             variant.put("id", row.get("variant_id"));
             variant.put("sku", row.get("variant_sku"));
             variant.put("combination", row.get("variant_attributes"));
-            variant.put("price", row.get("wholesale_price")); // <--- Variant specific price
+            variant.put("price", row.get("wholesale_price"));
             variant.put("stock", row.get("stock_quantity"));
             variant.put("imageUrls", row.get("variant_images"));
 
@@ -222,4 +242,6 @@ public List<Map<String, Object>> fetchProductsFromDatabase() {
 
     return new ArrayList<>(productMap.values());
 }
+
+
 }

@@ -15,4 +15,5 @@ public interface BaseDao {
     public void insertProduct(UUID productId, ProductSaveRequest request) throws JsonProcessingException;
     public void insertVariant(UUID productId, UUID variantId, ProductSaveRequest.VariantDTO variant) throws JsonProcessingException;
     public List<Map<String, Object>> fetchProductsFromDatabase();
+    
 }
