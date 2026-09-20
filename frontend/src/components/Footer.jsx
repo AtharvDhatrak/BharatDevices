@@ -63,16 +63,25 @@ export default function Footer() {
             <Link to="/contact" className="ft-cta-btn-outline">Talk to Our Team</Link>
           </div>
 
-          <div className="ft-cta-badges">
-            {ctaBadges.map((b, i) => (
-              <div key={i} className="ft-cta-badge">
-                <div className="ft-cta-badge-icon">{b.icon}</div>
-                <div>
-                  <strong>{b.title}</strong>
-                  <span>{b.sub}</span>
-                </div>
+          <div className="ft-cta-contacts">
+            <a href="tel:+918308649907" className="ft-cta-contact-item">
+              <div className="ft-cta-contact-icon">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 13a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.54 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
               </div>
-            ))}
+              <div>
+                <span className="ft-cta-contact-label">CALL US</span>
+                <span className="ft-cta-contact-value">+91 83086 49907</span>
+              </div>
+            </a>
+            <a href="mailto:sales@bharatdevices.com" className="ft-cta-contact-item">
+              <div className="ft-cta-contact-icon">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+              </div>
+              <div>
+                <span className="ft-cta-contact-label">EMAIL US</span>
+                <span className="ft-cta-contact-value">sales@bharatdevices.com</span>
+              </div>
+            </a>
           </div>
 
         </div>
@@ -99,7 +108,7 @@ export default function Footer() {
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
               </a>
               <a href="#" className="ft-social" aria-label="YouTube">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M22.54 6.42a2.78 2.78 0 0 0-1.95-1.96C18.88 4 12 4 12 4s-6.88 0-8.59.46a2.78 2.78 0 0 0-1.95 1.96A29 29 0 0 0 1 12a29 29 0 0 0 .46 5.58A2.78 2.78 0 0 0 3.41 19.6C5.12 20 12 20 12 20s6.88 0 8.59-.4a2.78 2.78 0 0 0 1.95-1.95A29 29 0 0 0 23 12a29 29 0 0 0-.46-5.58z"/><polygon points="9.75 15.02 15.5 12 9.75 8.98 9.75 15.02" fill="#0b1628"/></svg>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M22.54 6.42a2.78 2.78 0 0 0-1.95-1.96C18.88 4 12 4 12 4s-6.88 0-8.59.46a2.78 2.78 0 0 0-1.95 1.96A29 29 0 0 0 1 12a29 29 0 0 0 .46 5.58A2.78 2.78 0 0 0 3.41 19.6C5.12 20 12 20 12 20s6.88 0 8.59-.4a2.78 2.78 0 0 0 1.95-1.95A29 29 0 0 0 23 12a29 29 0 0 0-.46-5.58z"/><polygon points="9.75 15.02 15.5 12 9.75 8.98 9.75 15.02" fill="#052e16"/></svg>
               </a>
               <a href="#" className="ft-social" aria-label="WhatsApp">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
@@ -193,11 +202,11 @@ export default function Footer() {
       </div>
 
       <style>{`
-        .ft-root { background: #080f1e; font-family: inherit; }
+        .ft-root { background: #ffffff; font-family: inherit; }
 
         /* ── CTA Banner ── */
         .ft-cta {
-          background: #0c1e42;
+          background: #064e3b;
           position: relative; overflow: hidden;
           padding: 0 42px;
           min-height: 160px;
@@ -207,7 +216,7 @@ export default function Footer() {
         .ft-cta-panel {
           position: absolute; right: 0; top: 0; bottom: 0;
           width: 48%;
-          background: #0879ee;
+          background: linear-gradient(135deg, #F97316, #EA580C);
           clip-path: polygon(12% 0, 100% 0, 100% 100%, 0% 100%);
         }
         .ft-cta-inner {
@@ -226,26 +235,26 @@ export default function Footer() {
         }
         .ft-cta-eyebrow-line {
           flex: 1; max-width: 80px; height: 1.5px;
-          background: linear-gradient(90deg, #3b82f6, transparent);
+          background: linear-gradient(90deg, #F97316, transparent);
         }
         .ft-cta-heading {
           font-size: clamp(1.25rem, 2.2vw, 1.75rem);
           font-weight: 900; color: #ffffff; line-height: 1.2; margin-bottom: 8px;
         }
-        .ft-cta-blue { color: #60a5fa; }
+        .ft-cta-blue { color: #FB923C; }
         .ft-cta-desc { font-size: 0.85rem; color: rgba(255,255,255,0.65); line-height: 1.6; max-width: 460px; }
 
         .ft-cta-btns {
           display: flex; flex-direction: column; gap: 10px; flex-shrink: 0;
         }
         .ft-cta-btn-primary {
-          background: #ffffff; color: #0c1e42;
+          background: #ffffff; color: #052e16;
           padding: 11px 22px; border-radius: 7px;
           font-size: 0.875rem; font-weight: 700; text-decoration: none;
           white-space: nowrap; text-align: center;
           transition: background 0.2s, transform 0.15s;
         }
-        .ft-cta-btn-primary:hover { background: #e0f2fe; transform: translateY(-1px); }
+        .ft-cta-btn-primary:hover { background: #fff7ed; transform: translateY(-1px); }
         .ft-cta-btn-outline {
           border: 1.5px solid rgba(255,255,255,0.5); color: #ffffff;
           padding: 10px 22px; border-radius: 7px;
@@ -255,21 +264,25 @@ export default function Footer() {
         }
         .ft-cta-btn-outline:hover { border-color: #fff; background: rgba(255,255,255,0.1); }
 
-        .ft-cta-badges { display: flex; flex-direction: column; gap: 14px; flex-shrink: 0; }
-        .ft-cta-badge { display: flex; align-items: center; gap: 12px; }
-        .ft-cta-badge-icon {
+        .ft-cta-contacts { display: flex; flex-direction: column; gap: 14px; flex-shrink: 0; }
+        .ft-cta-contact-item {
+          display: flex; align-items: center; gap: 12px;
+          text-decoration: none; transition: opacity 0.2s;
+        }
+        .ft-cta-contact-item:hover { opacity: 0.85; }
+        .ft-cta-contact-icon {
           width: 38px; height: 38px; border-radius: 50%;
           background: rgba(255,255,255,0.15);
           display: flex; align-items: center; justify-content: center;
-          flex-shrink: 0;
+          flex-shrink: 0; color: #ffffff;
         }
-        .ft-cta-badge strong { display: block; font-size: 0.82rem; font-weight: 700; color: #ffffff; line-height: 1.3; }
-        .ft-cta-badge span { display: block; font-size: 0.72rem; color: rgba(255,255,255,0.6); }
+        .ft-cta-contact-label { display: block; font-size: 0.68rem; font-weight: 700; color: rgba(255,255,255,0.6); letter-spacing: 0.1em; }
+        .ft-cta-contact-value { display: block; font-size: 0.88rem; font-weight: 700; color: #ffffff; margin-top: 1px; }
 
         /* ── Footer Body ── */
         .ft-body {
           padding: 48px 42px 40px;
-          border-bottom: 1px solid rgba(255,255,255,0.06);
+          border-bottom: 1px solid #e5e7eb;
         }
         .ft-inner {
           max-width: 1280px; margin: 0 auto;
@@ -282,31 +295,31 @@ export default function Footer() {
         .ft-brand { display: flex; flex-direction: column; gap: 10px; }
         .ft-logo-link { display: inline-block; }
         .ft-logo { height: 50px; width: auto; object-fit: contain; display: block; }
-        .ft-legal { font-size: 0.8rem; font-weight: 600; color: #e2e8f0; margin: 0; }
-        .ft-sub { font-size: 0.75rem; color: #3b82f6; font-weight: 500; margin: 0; }
-        .ft-tagline { font-size: 0.78rem; color: #475569; line-height: 1.65; margin: 4px 0 0; }
+        .ft-legal { font-size: 0.8rem; font-weight: 600; color: #1e293b; margin: 0; }
+        .ft-sub { font-size: 0.75rem; color: #F97316; font-weight: 500; margin: 0; }
+        .ft-tagline { font-size: 0.78rem; color: #64748b; line-height: 1.65; margin: 4px 0 0; }
         .ft-socials { display: flex; gap: 8px; margin-top: 4px; }
         .ft-social {
           width: 32px; height: 32px; border-radius: 7px;
-          background: rgba(255,255,255,0.07);
+          background: #f1f5f9;
           display: flex; align-items: center; justify-content: center;
           color: #94a3b8; text-decoration: none;
           transition: background 0.2s, color 0.2s;
         }
-        .ft-social:hover { background: #1d4ed8; color: #fff; }
+        .ft-social:hover { background: #F97316; color: #fff; }
 
         /* Columns */
         .ft-col { display: flex; flex-direction: column; gap: 14px; }
-        .ft-col-title { font-size: 0.88rem; font-weight: 700; color: #ffffff; margin: 0; }
+        .ft-col-title { font-size: 0.88rem; font-weight: 700; color: #1e293b; margin: 0; }
         .ft-links { list-style: none; display: flex; flex-direction: column; gap: 2px; }
         .ft-link {
           display: flex; align-items: center; justify-content: space-between;
           padding: 6px 0;
           font-size: 0.82rem; color: #64748b; text-decoration: none;
-          border-bottom: 1px solid rgba(255,255,255,0.04);
+          border-bottom: 1px solid #f1f5f9;
           transition: color 0.2s;
         }
-        .ft-link:hover { color: #ffffff; }
+        .ft-link:hover { color: #1e293b; }
         .ft-link svg { opacity: 0.4; transition: opacity 0.2s, transform 0.2s; }
         .ft-link:hover svg { opacity: 1; transform: translateX(2px); }
 
@@ -315,39 +328,39 @@ export default function Footer() {
         .ft-contact-item { display: flex; align-items: flex-start; gap: 10px; }
         .ft-contact-icon {
           width: 26px; height: 26px; border-radius: 6px;
-          background: rgba(59,130,246,0.12);
+          background: rgba(249,115,22,0.12);
           display: flex; align-items: center; justify-content: center;
-          flex-shrink: 0; color: #60a5fa; margin-top: 1px;
+          flex-shrink: 0; color: #F97316; margin-top: 1px;
         }
         .ft-link-plain {
           font-size: 0.8rem; color: #64748b; text-decoration: none;
           transition: color 0.2s; display: block;
         }
-        .ft-link-plain:hover { color: #ffffff; }
+        .ft-link-plain:hover { color: #1e293b; }
         .ft-email-group { display: flex; flex-direction: column; gap: 3px; }
         .ft-addr-label {
           display: block; font-size: 0.68rem; font-weight: 700;
-          color: #3b82f6; letter-spacing: 0.08em; margin-bottom: 3px;
+          color: #F97316; letter-spacing: 0.08em; margin-bottom: 3px;
         }
         .ft-addr-text { font-size: 0.78rem; color: #64748b; line-height: 1.6; display: block; }
 
         /* ── Bottom Bar ── */
-        .ft-bottom { padding: 14px 42px; background: #060b14; }
+        .ft-bottom { padding: 14px 42px; background: #f8fafc; border-top: 1px solid #e5e7eb; }
         .ft-bottom-inner {
           max-width: 1280px; margin: 0 auto;
           display: flex; align-items: center;
           justify-content: space-between; gap: 16px;
-          font-size: 0.78rem; color: #334155;
+          font-size: 0.78rem; color: #64748b;
         }
-        .ft-bottom-tagline { color: #334155; }
+        .ft-bottom-tagline { color: #64748b; }
         .ft-scroll-top {
           width: 36px; height: 36px; border-radius: 50%;
-          background: #1d4ed8; border: none; cursor: pointer;
+          background: #F97316; border: none; cursor: pointer;
           display: flex; align-items: center; justify-content: center;
           color: #ffffff; flex-shrink: 0;
           transition: background 0.2s, transform 0.15s;
         }
-        .ft-scroll-top:hover { background: #2563eb; transform: translateY(-2px); }
+        .ft-scroll-top:hover { background: #EA580C; transform: translateY(-2px); }
 
         /* ── Responsive ── */
         @media (max-width: 1100px) {

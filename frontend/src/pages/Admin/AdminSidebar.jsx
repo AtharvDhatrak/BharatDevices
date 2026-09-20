@@ -102,10 +102,10 @@ const SidebarNavItem = ({
     if (onCloseMobile) onCloseMobile();
   };
 
-  const activeBg = isDark ? "#0e2a5c" : "#e0e7ff";
-  const activeText = isDark ? "#ffffff" : "#1e40af";
+  const activeBg = isDark ? "#1e3a1e" : "#fff7ed";
+  const activeText = isDark ? "#ffffff" : "#EA580C";
   const inactiveText = isDark ? "#94a3b8" : "#475569";
-  const activeIconColor = isDark ? "#60a5fa" : "#2563eb";
+  const activeIconColor = isDark ? "#FB923C" : "#F97316";
 
   return (
     <div style={{ display: "flex", flexDirection: "column", marginBottom: "0.25rem" }}>
@@ -192,7 +192,7 @@ const SidebarNavItem = ({
                 top: "0.5rem",
                 bottom: "0.5rem",
                 width: "1px",
-                backgroundColor: isDark ? "#1e3a8a" : "#cbd5e1",
+                backgroundColor: isDark ? "#1e3a1e" : "#cbd5e1",
               }}
             />
 
@@ -211,14 +211,14 @@ const SidebarNavItem = ({
                     gap: "0.75rem",
                     minHeight: "40px",
                     background: isChildItemActive
-                      ? isDark ? "rgba(37, 99, 235, 0.25)" : "rgba(37, 99, 235, 0.1)"
+                      ? isDark ? "rgba(249, 115, 22, 0.25)" : "rgba(249, 115, 22, 0.1)"
                       : "transparent",
                     border: "none",
                     padding: "0.5rem 0.6rem",
                     borderRadius: "6px",
                     fontSize: "0.88rem",
                     color: isChildItemActive
-                      ? isDark ? "#ffffff" : "#1d4ed8"
+                      ? isDark ? "#ffffff" : "#EA580C"
                       : isDark ? "#94a3b8" : "#64748b",
                     fontWeight: isChildItemActive ? "600" : "400",
                     cursor: "pointer",
@@ -233,8 +233,8 @@ const SidebarNavItem = ({
                       height: "6px",
                       minWidth: "6px",
                       borderRadius: "50%",
-                      backgroundColor: isChildItemActive ? "#3b82f6" : isDark ? "#64748b" : "#cbd5e1",
-                      boxShadow: isChildItemActive ? "0 0 8px #3b82f6" : "none",
+                      backgroundColor: isChildItemActive ? "#F97316" : isDark ? "#64748b" : "#cbd5e1",
+                      boxShadow: isChildItemActive ? "0 0 8px #F97316" : "none",
                       transition: "all 0.2s",
                     }}
                   />
@@ -388,7 +388,7 @@ export default function Sidebar({ navItems = [], loading, activePath, onNavigate
               onClick={() => setIsMobileOpen(false)}
               aria-label="Close Navigation"
               style={{
-                background: isDarkMode ? "#0e2a5c" : "#f1f5f9",
+                background: isDarkMode ? "#1e3a1e" : "#f1f5f9",
                 border: "none",
                 color: isDarkMode ? "#94a3b8" : "#475569",
                 borderRadius: "6px",
@@ -407,7 +407,7 @@ export default function Sidebar({ navItems = [], loading, activePath, onNavigate
               type="button"
               onClick={toggleSidebar}
               style={{
-                background: isDarkMode ? "#0e2a5c" : "#f1f5f9",
+                background: isDarkMode ? "#1e3a1e" : "#f1f5f9",
                 border: "none",
                 color: isDarkMode ? "#94a3b8" : "#475569",
                 borderRadius: "6px",
@@ -468,7 +468,7 @@ export default function Sidebar({ navItems = [], loading, activePath, onNavigate
               width: "36px",
               height: "36px",
               borderRadius: "50%",
-              backgroundColor: "#1d4ed8",
+              backgroundColor: "#F97316",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",

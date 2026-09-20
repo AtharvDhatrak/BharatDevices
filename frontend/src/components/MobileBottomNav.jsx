@@ -121,9 +121,9 @@ export default function MobileBottomNav() {
           font-family: inherit;
         }
 
-        .bnav-item:hover { color: #1d4ed8; }
+        .bnav-item:hover { color: #F97316; }
 
-        .bnav-active { color: #1d4ed8 !important; }
+        .bnav-active { color: #F97316 !important; }
 
         .bnav-search-btn { color: #94a3b8; }
 
@@ -156,7 +156,7 @@ export default function MobileBottomNav() {
           align-items: center;
           gap: 0.5rem;
           background: #f8fafc;
-          border: 1.5px solid #1d4ed8;
+          border: 1.5px solid #F97316;
           border-radius: 10px;
           padding: 0.65rem 0.85rem;
         }

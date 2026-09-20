@@ -171,7 +171,7 @@ export default function Hero() {
           letter-spacing: -0.02em;
         }
 
-        .hero-highlight { color: #3b82f6; }
+        .hero-highlight { color: #F97316; }
 
         .hero-desc {
           color: #cbd5e1;
@@ -182,7 +182,7 @@ export default function Hero() {
         .hero-cta {
           display: inline-flex;
           align-items: center;
-          background: #1d4ed8;
+          background: #F97316;
           color: #ffffff;
           padding: 0.8rem 1.9rem;
           border-radius: 8px;
@@ -193,7 +193,7 @@ export default function Hero() {
           transition: background 0.2s, transform 0.2s;
         }
 
-        .hero-cta:hover { background: #1e40af; transform: translateX(3px); }
+        .hero-cta:hover { background: #EA580C; transform: translateX(3px); }
 
         /* Arrows */
         .slider-arrow {

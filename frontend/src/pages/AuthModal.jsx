@@ -186,7 +186,7 @@ export default function AdminAuthPage() {
         .al-blob {
           position: absolute;
           border-radius: 50%;
-          background: rgba(191, 219, 254, 0.55);
+          background: rgba(253, 186, 116, 0.35);
           pointer-events: none;
           z-index: 0;
         }
@@ -214,14 +214,14 @@ export default function AdminAuthPage() {
         .al-bar { height: 3px; width: 26px; border-radius: 2px; display: block; }
         .al-bar-orange { background: #f97316; }
         .al-bar-green  { background: #22c55e; }
-        .al-bar-blue   { background: #2563eb; }
+        .al-bar-blue   { background: #F97316; }
 
         .al-card {
           position: relative;
           z-index: 2;
           background: #ffffff;
           border-radius: 20px;
-          box-shadow: 0 8px 48px rgba(30, 64, 175, 0.10), 0 2px 8px rgba(0,0,0,0.04);
+          box-shadow: 0 8px 48px rgba(249, 115, 22, 0.10), 0 2px 8px rgba(0,0,0,0.04);
           padding: 2.5rem 2.25rem 2.25rem;
           width: 100%;
           max-width: 460px;
@@ -241,7 +241,7 @@ export default function AdminAuthPage() {
           margin: 0 0 0.45rem;
           letter-spacing: -0.02em;
         }
-        .al-title-blue { color: #2563eb; }
+        .al-title-blue { color: #F97316; }
 
         .al-subtitle {
           font-size: 0.88rem;
@@ -277,8 +277,8 @@ export default function AdminAuthPage() {
           transition: border-color 0.2s, box-shadow 0.2s;
         }
         .al-input-wrap:focus-within {
-          border-color: #2563eb;
-          box-shadow: 0 0 0 3px rgba(37,99,235,0.08);
+          border-color: #F97316;
+          box-shadow: 0 0 0 3px rgba(249,115,22,0.08);
         }
 
         .al-input-icon { flex-shrink: 0; }
@@ -325,14 +325,14 @@ export default function AdminAuthPage() {
         .al-checkbox {
           width: 17px;
           height: 17px;
-          accent-color: #2563eb;
+          accent-color: #F97316;
           cursor: pointer;
         }
 
         .al-forgot {
           font-size: 0.82rem;
           font-weight: 600;
-          color: #2563eb;
+          color: #F97316;
           text-decoration: none;
         }
         .al-forgot:hover { text-decoration: underline; }
@@ -340,7 +340,7 @@ export default function AdminAuthPage() {
         .al-submit-btn {
           width: 100%;
           padding: 0.85rem 1.4rem;
-          background: #1e3a8a;
+          background: #EA580C;
           color: #fff;
           border: none;
           border-radius: 10px;
@@ -355,7 +355,7 @@ export default function AdminAuthPage() {
           font-family: inherit;
         }
         .al-submit-btn:hover:not(:disabled) {
-          background: #1d4ed8;
+          background: #F97316;
           transform: translateY(-1px);
         }
         .al-submit-btn:disabled { opacity: 0.65; cursor: not-allowed; }

@@ -113,13 +113,13 @@ export default function ProductDetail() {
             <h3 className="help-heading">Need Help?</h3>
             <p className="help-sub">Our team is ready to help you</p>
             <a href="tel:+911244567800" className="help-contact">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1d4ed8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 13a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.54 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/>
               </svg>
               +91 124 456 7800
             </a>
             <a href="mailto:sales@bharatdevices.com" className="help-contact">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1d4ed8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
                 <polyline points="22,6 12,13 2,6"/>
               </svg>
@@ -153,7 +153,7 @@ export default function ProductDetail() {
         }
 
         .bread-link {
-          color: #1d4ed8;
+          color: #16a34a;
           text-decoration: none;
           font-weight: 500;
         }
@@ -203,7 +203,7 @@ export default function ProductDetail() {
           transition: border-color 0.2s;
         }
 
-        .thumb-btn.thumb-active { border-color: #1d4ed8; }
+        .thumb-btn.thumb-active { border-color: #F97316; }
 
         .thumb-btn:hover { border-color: #93c5fd; }
 
@@ -245,13 +245,13 @@ export default function ProductDetail() {
 
         .detail-category-badge {
           display: inline-block;
-          background: #eff6ff;
-          color: #1d4ed8;
+          background: #f0fdf4;
+          color: #16a34a;
           font-size: 0.75rem;
           font-weight: 600;
           padding: 0.25rem 0.75rem;
           border-radius: 20px;
-          border: 1px solid #bfdbfe;
+          border: 1px solid #bbf7d0;
         }
 
         .detail-meta {
@@ -311,7 +311,7 @@ export default function ProductDetail() {
         }
 
         .btn-quote {
-          background: #1d4ed8;
+          background: #F97316;
           color: #ffffff;
           border: none;
           border-radius: 8px;
@@ -322,7 +322,7 @@ export default function ProductDetail() {
           transition: background 0.2s;
         }
 
-        .btn-quote:hover { background: #1e40af; }
+        .btn-quote:hover { background: #EA580C; }
 
         .btn-datasheet {
           background: #ffffff;
@@ -336,7 +336,7 @@ export default function ProductDetail() {
           transition: border-color 0.2s, background 0.2s;
         }
 
-        .btn-datasheet:hover { border-color: #1d4ed8; color: #1d4ed8; }
+        .btn-datasheet:hover { border-color: #16a34a; color: #16a34a; }
 
         /* Bottom Grid */
         .bottom-grid {
@@ -417,7 +417,7 @@ export default function ProductDetail() {
           border-top: 1px solid #f1f5f9;
         }
 
-        .help-contact:hover { color: #1d4ed8; }
+        .help-contact:hover { color: #16a34a; }
 
         @media (max-width: 900px) {
           .detail-grid { grid-template-columns: 1fr; }

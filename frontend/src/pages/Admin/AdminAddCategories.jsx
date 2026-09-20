@@ -398,7 +398,7 @@ export default function AdminAddCategories() {
                         borderRadius: "6px",
                         textAlign: "left",
                         border: "none",
-                        backgroundColor: selectedCategoryId === cat.id ? "#2563eb" : "transparent",
+                        backgroundColor: selectedCategoryId === cat.id ? "#F97316" : "transparent",
                         color: selectedCategoryId === cat.id ? "#ffffff" : textColor,
                         cursor: "pointer",
                         fontSize: "13px",
@@ -461,7 +461,7 @@ export default function AdminAddCategories() {
                 <button
                   type="button"
                   onClick={handleAddSpecField}
-                  style={{ padding: "8px 14px", borderRadius: "6px", backgroundColor: "#2563eb", color: "#fff", border: "none", cursor: "pointer", fontWeight: "600", fontSize: "12px", width: isMobile ? "100%" : "auto" }}
+                  style={{ padding: "8px 14px", borderRadius: "6px", backgroundColor: "#F97316", color: "#fff", border: "none", cursor: "pointer", fontWeight: "600", fontSize: "12px", width: isMobile ? "100%" : "auto" }}
                 >
                   + Add Specification Field
                 </button>

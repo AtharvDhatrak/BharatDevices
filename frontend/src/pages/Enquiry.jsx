@@ -124,7 +124,7 @@ export default function Enquiry() {
                 )}
                 <button className="change-product-btn" onClick={() => setStep(1)}>Change Product</button>
                 <div className="enquiry-info-box">
-                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#1d4ed8" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
                     <polyline points="22,6 12,13 2,6"/>
                   </svg>
@@ -215,7 +215,7 @@ export default function Enquiry() {
           position: absolute;
           top: -80px; right: -80px;
           width: 420px; height: 420px;
-          background: rgba(29,78,216,0.12);
+          background: rgba(249,115,22,0.12);
           border-radius: 50%;
           pointer-events: none;
         }
@@ -224,7 +224,7 @@ export default function Enquiry() {
           position: absolute;
           bottom: -100px; left: -60px;
           width: 320px; height: 320px;
-          background: rgba(29,78,216,0.08);
+          background: rgba(249,115,22,0.08);
           border-radius: 50%;
           pointer-events: none;
         }
@@ -282,10 +282,10 @@ export default function Enquiry() {
         }
 
         .step-circle.active {
-          background: #1d4ed8;
-          border-color: #1d4ed8;
+          background: #F97316;
+          border-color: #F97316;
           color: #ffffff;
-          box-shadow: 0 0 0 4px rgba(29,78,216,0.3);
+          box-shadow: 0 0 0 4px rgba(249,115,22,0.3);
         }
 
         .step-circle.done {
@@ -302,7 +302,7 @@ export default function Enquiry() {
         }
 
         .step-label-active {
-          color: #60a5fa;
+          color: #FB923C;
           font-weight: 700;
         }
 
@@ -367,9 +367,9 @@ export default function Enquiry() {
         }
 
         .product-select-card.selected {
-          border-color: #3b82f6;
-          box-shadow: 0 0 0 3px rgba(59,130,246,0.2);
-          background: rgba(29,78,216,0.15);
+          border-color: #F97316;
+          box-shadow: 0 0 0 3px rgba(249,115,22,0.2);
+          background: rgba(249,115,22,0.1);
         }
 
         .product-select-img {
@@ -395,7 +395,7 @@ export default function Enquiry() {
         .product-select-price {
           font-size: 0.8rem;
           font-weight: 700;
-          color: #60a5fa;
+          color: #FB923C;
           display: block;
         }
 
@@ -403,7 +403,7 @@ export default function Enquiry() {
 
         .btn-next {
           background: #ffffff;
-          color: #1d4ed8;
+          color: #EA580C;
           border: none;
           border-radius: 8px;
           padding: 0.7rem 2rem;
@@ -496,14 +496,14 @@ export default function Enquiry() {
           font-family: inherit;
           background: rgba(255,255,255,0.08);
         }
-        .qty-value:focus { border-color: #3b82f6; }
+        .qty-value:focus { border-color: #F97316; }
         .qty-value::-webkit-inner-spin-button,
         .qty-value::-webkit-outer-spin-button { opacity: 0.5; }
 
         .change-product-btn {
           background: none;
           border: none;
-          color: #60a5fa;
+          color: #16a34a;
           font-size: 0.83rem;
           font-weight: 600;
           cursor: pointer;
@@ -511,7 +511,7 @@ export default function Enquiry() {
           padding: 0;
           transition: color 0.2s;
         }
-        .change-product-btn:hover { color: #93c5fd; }
+        .change-product-btn:hover { color: #22c55e; }
 
         .enquiry-info-box {
           display: flex;
@@ -519,11 +519,11 @@ export default function Enquiry() {
           align-items: center;
           gap: 0.5rem;
           padding: 1rem;
-          background: rgba(29,78,216,0.2);
-          border: 1px solid rgba(59,130,246,0.3);
+          background: rgba(22,163,74,0.15);
+          border: 1px solid rgba(22,163,74,0.3);
           border-radius: 10px;
           font-size: 0.8rem;
-          color: #93c5fd;
+          color: #22c55e;
           text-align: center;
           font-weight: 500;
           margin-top: auto;
@@ -573,12 +573,12 @@ export default function Enquiry() {
           background: rgba(255,255,255,0.07);
         }
         .field-input::placeholder { color: #64748b; }
-        .field-input:focus { border-color: #3b82f6; background: rgba(255,255,255,0.1); }
+        .field-input:focus { border-color: #F97316; background: rgba(255,255,255,0.1); }
         .field-textarea { resize: vertical; min-height: 70px; }
 
         .btn-submit {
           background: #ffffff;
-          color: #1d4ed8;
+          color: #EA580C;
           border: none;
           border-radius: 8px;
           padding: 0.75rem;
@@ -652,7 +652,7 @@ export default function Enquiry() {
 
         .btn-back-home {
           background: #ffffff;
-          color: #1d4ed8;
+          color: #EA580C;
           border-radius: 8px;
           padding: 0.7rem 2rem;
           font-size: 0.9rem;

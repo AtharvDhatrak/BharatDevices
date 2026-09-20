@@ -16,8 +16,8 @@
   --text-primary: #1e293b;
   --text-secondary: #64748b;
   --border-color: #e5e7eb;
-  --accent-color: #1d4ed8;
-  --accent-glow: rgba(29, 78, 216, 0.2);
+  --accent-color: #F97316;
+  --accent-glow: rgba(249, 115, 22, 0.2);
 
   /* Dynamic Fluid Typography & Spacing */
   --font-h1: clamp(1.75rem, 4vw, 2.75rem);

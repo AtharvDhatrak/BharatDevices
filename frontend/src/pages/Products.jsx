@@ -426,12 +426,22 @@ export default function Products() {
         }
 
         .banner-badge-bar {
-          width: 36px;
-          height: 3px;
-          background: #1d4ed8;
-          border-radius: 2px;
+          display: flex;
+          gap: 3px;
           margin-top: 6px;
         }
+
+        .banner-badge-bar::before,
+        .banner-badge-bar::after {
+          content: '';
+          display: block;
+          height: 3px;
+          width: 22px;
+          border-radius: 2px;
+        }
+
+        .banner-badge-bar::before { background: #F97316; }
+        .banner-badge-bar::after  { background: #16a34a; }
 
         /* ── Mobile Search ── */
         .mobile-search-bar {
@@ -491,7 +501,7 @@ export default function Products() {
           transition: color 0.2s;
         }
 
-        .breadcrumb-link:hover { color: #1d4ed8; }
+        .breadcrumb-link:hover { color: #F97316; }
 
         .breadcrumb-sep { color: #94a3b8; }
 
@@ -517,7 +527,7 @@ export default function Products() {
           transition: border-color 0.2s;
         }
 
-        .mobile-filter-btn:hover { border-color: #1d4ed8; color: #1d4ed8; }
+        .mobile-filter-btn:hover { border-color: #F97316; color: #F97316; }
 
         .mobile-sort-wrap { display: flex; align-items: center; gap: 0.4rem; }
 
@@ -557,7 +567,7 @@ export default function Products() {
         .clear-all-btn {
           background: none;
           border: none;
-          color: #1d4ed8;
+          color: #16a34a;
           font-size: 0.8rem;
           font-weight: 600;
           cursor: pointer;
@@ -592,7 +602,7 @@ export default function Products() {
         .filter-checkbox {
           width: 15px;
           height: 15px;
-          accent-color: #1d4ed8;
+          accent-color: #F97316;
           cursor: pointer;
           flex-shrink: 0;
         }
@@ -604,7 +614,7 @@ export default function Products() {
         .show-more-btn {
           background: none;
           border: none;
-          color: #1d4ed8;
+          color: #16a34a;
           font-size: 0.8rem;
           font-weight: 600;
           cursor: pointer;
@@ -623,7 +633,7 @@ export default function Products() {
           width: 100%;
         }
 
-        .brand-search-input:focus { border-color: #1d4ed8; }
+        .brand-search-input:focus { border-color: #F97316; }
 
         .price-range-labels {
           display: flex;
@@ -636,11 +646,11 @@ export default function Products() {
 
         .price-sliders { display: flex; flex-direction: column; gap: 0.4rem; }
 
-        .price-slider { width: 100%; accent-color: #1d4ed8; cursor: pointer; }
+        .price-slider { width: 100%; accent-color: #F97316; cursor: pointer; }
 
         .apply-filters-btn {
           margin-top: 0.5rem;
-          background: #1d4ed8;
+          background: #F97316;
           color: #ffffff;
           border: none;
           border-radius: 8px;
@@ -652,7 +662,7 @@ export default function Products() {
           width: 100%;
         }
 
-        .apply-filters-btn:hover { background: #1e40af; }
+        .apply-filters-btn:hover { background: #EA580C; }
 
         /* ── Grid Header ── */
         .products-grid-wrap { display: flex; flex-direction: column; gap: 1rem; }
@@ -803,16 +813,16 @@ export default function Products() {
           display: block;
           text-align: center;
           padding: 0.5rem;
-          border: 1.5px solid #1d4ed8;
+          border: 1.5px solid #16a34a;
           border-radius: 7px;
-          color: #1d4ed8;
+          color: #16a34a;
           font-size: 0.8rem;
           font-weight: 600;
           text-decoration: none;
           transition: background 0.2s, color 0.2s;
         }
 
-        .view-details-btn:hover { background: #1d4ed8; color: #ffffff; }
+        .view-details-btn:hover { background: #16a34a; color: #ffffff; }
 
         .request-quote-btn {
           display: block;
@@ -820,7 +830,7 @@ export default function Products() {
           padding: 0.5rem;
           border: none;
           border-radius: 7px;
-          background: #1d4ed8;
+          background: #F97316;
           color: #ffffff;
           font-size: 0.8rem;
           font-weight: 600;
@@ -829,7 +839,7 @@ export default function Products() {
           cursor: pointer;
         }
 
-        .request-quote-btn:hover { background: #1e40af; }
+        .request-quote-btn:hover { background: #EA580C; }
 
         .empty-state {
           text-align: center;

@@ -4,8 +4,6 @@ import TrustBadges from '../components/TrustBadges';
 import ShopByCategory from '../components/ShopByCategory';
 import BusinessSolutions from '../components/BusinessSolutions';
 import WhyChooseUs from '../components/WhyChooseUs';
-import CTABanner from '../components/CTABanner';
-
 export default function Home() {
   return (
     <main style={{ width: '100%', background: '#f8fafc' }}>
@@ -14,7 +12,6 @@ export default function Home() {
       <ShopByCategory />
       <BusinessSolutions />
       <WhyChooseUs />
-      <CTABanner />
     </main>
   );
 }

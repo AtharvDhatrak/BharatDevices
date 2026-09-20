@@ -44,26 +44,15 @@ export default function CTABanner() {
       <style>{`
         .cta-section {
           position: relative;
-          background: #0b1628;
+          background: #fff7ed;
           padding: 3.5rem 1.5rem;
           overflow: hidden;
+          border-top: 1px solid #fed7aa;
+          border-bottom: 1px solid #fed7aa;
         }
 
-        .cta-bg-img {
-          position: absolute;
-          right: 0;
-          top: 0;
-          bottom: 0;
-          width: 45%;
-          background: url('https://images.unsplash.com/photo-1496181133206-80ce9b88a853?auto=format&fit=crop&w=800&q=80') center/cover no-repeat;
-          opacity: 0.15;
-        }
-
-        .cta-overlay {
-          position: absolute;
-          inset: 0;
-          background: linear-gradient(90deg, #0b1628 55%, transparent 100%);
-        }
+        .cta-bg-img { display: none; }
+        .cta-overlay { display: none; }
 
         .cta-inner {
           position: relative;
@@ -85,7 +74,7 @@ export default function CTABanner() {
         .cta-eyebrow {
           font-size: 0.72rem;
           font-weight: 700;
-          color: #3b82f6;
+          color: #F97316;
           letter-spacing: 0.1em;
           text-transform: uppercase;
         }
@@ -93,13 +82,13 @@ export default function CTABanner() {
         .cta-title {
           font-size: clamp(1.35rem, 2.8vw, 2rem);
           font-weight: 800;
-          color: #ffffff;
+          color: #1e293b;
           line-height: 1.25;
           max-width: 500px;
         }
 
         .cta-desc {
-          color: #94a3b8;
+          color: #64748b;
           font-size: 0.9rem;
           line-height: 1.6;
         }
@@ -107,8 +96,8 @@ export default function CTABanner() {
         .cta-btn {
           display: inline-flex;
           align-items: center;
-          border: 2px solid #ffffff;
-          color: #ffffff;
+          border: 2px solid #EA580C;
+          color: #EA580C;
           padding: 0.7rem 1.5rem;
           border-radius: 8px;
           font-size: 0.875rem;
@@ -118,7 +107,7 @@ export default function CTABanner() {
           transition: background 0.2s, color 0.2s;
         }
 
-        .cta-btn:hover { background: #ffffff; color: #0b1628; }
+        .cta-btn:hover { background: #EA580C; color: #ffffff; }
 
         .cta-contacts {
           display: flex;
@@ -136,19 +125,19 @@ export default function CTABanner() {
         .cta-contact-icon {
           width: 44px;
           height: 44px;
-          background: rgba(255,255,255,0.1);
+          background: #fed7aa;
           border-radius: 10px;
           display: flex;
           align-items: center;
           justify-content: center;
-          color: #ffffff;
+          color: #EA580C;
           flex-shrink: 0;
         }
 
         .cta-contact-label {
           display: block;
           font-size: 0.72rem;
-          color: #94a3b8;
+          color: #64748b;
           font-weight: 500;
           text-transform: uppercase;
           letter-spacing: 0.05em;
@@ -158,13 +147,13 @@ export default function CTABanner() {
           display: block;
           font-size: 0.95rem;
           font-weight: 700;
-          color: #ffffff;
+          color: #1e293b;
           text-decoration: none;
           margin-top: 2px;
           transition: color 0.2s;
         }
 
-        .cta-contact-value:hover { color: #3b82f6; }
+        .cta-contact-value:hover { color: #EA580C; }
 
         @media (max-width: 900px) {
           .cta-inner { grid-template-columns: 1fr; gap: 2rem; }

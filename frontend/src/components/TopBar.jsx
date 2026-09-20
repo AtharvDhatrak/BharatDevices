@@ -118,12 +118,13 @@ export default function TopBar() {
 
       <style>{`
         .topbar {
-          background: #1a2744;
-          color: #cbd5e1;
+          background: #ffffff;
+          color: #475569;
           font-size: 0.76rem;
           font-weight: 400;
           padding: 0.4rem 1.5rem;
           width: 100%;
+          border-bottom: 1px solid #e5e7eb;
           /* FIX: Ensures topbar stays above sticky navbar */
           position: relative;
           z-index: 1000;
@@ -140,7 +141,7 @@ export default function TopBar() {
         }
 
         .topbar-tagline {
-          color: #94a3b8;
+          color: #64748b;
           font-size: 0.74rem;
           white-space: nowrap;
         }
@@ -155,14 +156,14 @@ export default function TopBar() {
           display: inline-flex;
           align-items: center;
           gap: 0.35rem;
-          color: #cbd5e1;
+          color: #475569;
           text-decoration: none;
           white-space: nowrap;
           transition: color 0.2s;
         }
 
-        .topbar-item:hover { 
-          color: #ffffff; 
+        .topbar-item:hover {
+          color: #EA580C;
         }
 
         .company-name {
@@ -170,8 +171,8 @@ export default function TopBar() {
           cursor: default;
         }
 
-        .topbar-sep { 
-          color: #374151; 
+        .topbar-sep {
+          color: #d1d5db;
         }
 
         /* Dropdown Styles */
@@ -183,7 +184,7 @@ export default function TopBar() {
         .topbar-dropdown-btn {
           background: transparent;
           border: none;
-          color: #cbd5e1;
+          color: #475569;
           font-size: 0.76rem;
           font-weight: 500;
           cursor: pointer;
@@ -195,7 +196,7 @@ export default function TopBar() {
         }
 
         .topbar-dropdown-btn:hover {
-          color: #ffffff;
+          color: #EA580C;
         }
 
         .arrow-icon {
@@ -209,10 +210,10 @@ export default function TopBar() {
           right: 0;
           top: calc(100% + 8px);
           width: 140px;
-          background-color: #1e293b;
-          border: 1px solid #334155;
+          background-color: #ffffff;
+          border: 1px solid #e5e7eb;
           border-radius: 8px;
-          box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+          box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
           padding: 0.35rem;
           display: flex;
           flex-direction: column;
@@ -224,7 +225,7 @@ export default function TopBar() {
         .topbar-dropdown-item {
           background: none;
           border: none;
-          color: #e2e8f0;
+          color: #374151;
           padding: 0.45rem 0.65rem;
           text-align: left;
           border-radius: 6px;
@@ -235,8 +236,8 @@ export default function TopBar() {
         }
 
         .topbar-dropdown-item:hover {
-          background-color: #334155;
-          color: #ffffff;
+          background-color: #fff7ed;
+          color: #EA580C;
         }
 
         @media (max-width: 900px) {

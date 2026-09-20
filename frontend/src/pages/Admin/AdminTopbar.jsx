@@ -166,7 +166,7 @@ export default function AdminTopbar({
             style={{
               background: "none",
               border: "none",
-              color: isDark ? "#60a5fa" : "#2563eb",
+              color: isDark ? "#FB923C" : "#F97316",
               fontWeight: 600,
               fontSize: "14px",
               cursor: "pointer",
@@ -240,7 +240,7 @@ export default function AdminTopbar({
             <button type="button" style={actionBtnStyle} aria-label="Messages">
               💬
               {messageCount > 0 && (
-                <span style={{ ...badgeStyle, backgroundColor: "#2563eb" }}>
+                <span style={{ ...badgeStyle, backgroundColor: "#F97316" }}>
                   {messageCount > 9 ? "9+" : messageCount}
                 </span>
               )}
@@ -273,7 +273,7 @@ export default function AdminTopbar({
                     width: "32px",
                     height: "32px",
                     borderRadius: "50%",
-                    backgroundColor: "#2563eb",
+                    backgroundColor: "#F97316",
                     color: "#fff",
                     display: "flex",
                     alignItems: "center",

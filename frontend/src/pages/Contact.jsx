@@ -18,51 +18,7 @@ export default function Contact() {
         <div className="ct-hero-bg" />
         <div className="ct-hero-overlay" />
         <div className="ct-hero-inner">
-          <div className="ct-hero-left">
-            <div className="ct-eyebrow">
-              <span className="ct-eyebrow-line ct-orange" />
-              CONTACT US
-              <span className="ct-eyebrow-line ct-green" />
-            </div>
-            <h1 className="ct-hero-title">Let's Talk <span className="ct-blue">Technology</span></h1>
-            <p className="ct-hero-sub">
-              Have a question, need a quote, or looking for the right solution?<br />
-              Our team is here to help you.
-            </p>
-            <div className="ct-hero-badges">
-              <span className="ct-hbadge">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg>
-                Trusted Support
-              </span>
-              <span className="ct-hbadge">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                Quick Response
-              </span>
-              <span className="ct-hbadge">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-                Dedicated Team
-              </span>
-              <span className="ct-hbadge">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
-                Business Focused
-              </span>
-            </div>
-          </div>
-          <div className="ct-hero-right">
-            <div className="ct-hero-img-wrap">
-              <img src="/about-hero.png" alt="Bharat Devices Office" className="ct-hero-img" />
-              <div className="ct-hero-img-overlay" />
-              <div className="ct-hero-brand">
-                <div className="ct-brand-logo">
-                  <span className="ct-brand-name">BHARAT<br/>DEVICES</span>
-                  <span className="ct-brand-tm">™</span>
-                </div>
-              </div>
-              <div className="ct-hero-tagline-box">
-                PEOPLE<br/>TECHNOLOGY<br/>SOLUTIONS<br/>A BRIGHTER<br/>TOMORROW
-              </div>
-            </div>
-          </div>
+          <h1 className="ct-hero-title">Let's Talk <span className="ct-blue">Technology</span></h1>
         </div>
       </section>
 
@@ -70,7 +26,7 @@ export default function Contact() {
       <section className="ct-quick">
         <div className="ct-quick-inner">
           <div className="ct-qcard">
-            <div className="ct-qcard-icon">
+            <div className="ct-qcard-icon ct-qcard-icon--orange">
               <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
             </div>
             <div className="ct-qcard-body">
@@ -82,7 +38,7 @@ export default function Contact() {
             </div>
           </div>
           <div className="ct-qcard">
-            <div className="ct-qcard-icon">
+            <div className="ct-qcard-icon ct-qcard-icon--green">
               <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
             </div>
             <div className="ct-qcard-body">
@@ -99,7 +55,7 @@ export default function Contact() {
             </div>
           </div>
           <div className="ct-qcard">
-            <div className="ct-qcard-icon">
+            <div className="ct-qcard-icon ct-qcard-icon--blue">
               <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 13a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.54 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
             </div>
             <div className="ct-qcard-body">
@@ -132,7 +88,7 @@ export default function Contact() {
             </p>
             <div className="ct-addr-card">
               <div className="ct-addr-icon">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1d4ed8" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 9h6M9 13h4"/></svg>
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 9h6M9 13h4"/></svg>
               </div>
               <div className="ct-addr-body">
                 <h4>Registered Address</h4>
@@ -145,7 +101,7 @@ export default function Contact() {
             </div>
             <div className="ct-addr-card">
               <div className="ct-addr-icon">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1d4ed8" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 9h6M9 13h4"/></svg>
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 9h6M9 13h4"/></svg>
               </div>
               <div className="ct-addr-body">
                 <h4>Office Address</h4>
@@ -168,7 +124,7 @@ export default function Contact() {
 
             {submitted ? (
               <div className="ct-success">
-                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#1d4ed8" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
                 <h3>Thank you! We'll be in touch soon.</h3>
               </div>
             ) : (
@@ -226,28 +182,28 @@ export default function Contact() {
         <div className="ct-trust-inner">
           <div className="ct-trust-item">
             <div className="ct-trust-icon">
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#1d4ed8" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg>
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#F97316" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg>
             </div>
             <div><h4>Genuine Products</h4><p>Sourced through trusted channels</p></div>
           </div>
           <div className="ct-trust-sep" />
           <div className="ct-trust-item">
             <div className="ct-trust-icon">
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#1d4ed8" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"/><line x1="12" y1="6" x2="12" y2="8"/><line x1="12" y1="16" x2="12" y2="18"/></svg>
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"/><line x1="12" y1="6" x2="12" y2="8"/><line x1="12" y1="16" x2="12" y2="18"/></svg>
             </div>
             <div><h4>Competitive Pricing</h4><p>Value for your business</p></div>
           </div>
           <div className="ct-trust-sep" />
           <div className="ct-trust-item">
             <div className="ct-trust-icon">
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#1d4ed8" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#F97316" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
             </div>
             <div><h4>Wide Product Range</h4><p>From devices to infrastructure</p></div>
           </div>
           <div className="ct-trust-sep" />
           <div className="ct-trust-item">
             <div className="ct-trust-icon">
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#1d4ed8" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/></svg>
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/></svg>
             </div>
             <div><h4>Reliable Support</h4><p>Before and after your purchase</p></div>
           </div>
@@ -262,27 +218,23 @@ export default function Contact() {
 
         /* ── Hero ── */
         .ct-hero {
-          position: relative; min-height: 340px; overflow: hidden;
-          background: #07152b;
+          position: relative; min-height: 420px; overflow: hidden;
+          background: transparent;
         }
         .ct-hero-bg {
           position: absolute; inset: 0;
           background: url('/about-hero.png') center/cover no-repeat;
-          opacity: 0.22;
+          filter: brightness(0.7);
         }
         .ct-hero-overlay {
           position: absolute; inset: 0;
-          background: linear-gradient(100deg, rgba(7,21,43,0.97) 45%, rgba(7,21,43,0.55) 100%);
+          background: rgba(0,0,0,0.35);
         }
         .ct-hero-inner {
           position: relative; z-index: 2;
           max-width: 1280px; margin: 0 auto;
-          display: grid; grid-template-columns: 1fr 1fr;
-          align-items: stretch; min-height: 340px;
-        }
-        .ct-hero-left {
-          padding: 52px 48px 52px 32px;
-          display: flex; flex-direction: column; gap: 18px;
+          display: flex; align-items: center; justify-content: center;
+          min-height: 420px; padding: 0 2rem;
         }
         .ct-eyebrow {
           display: flex; align-items: center; gap: 10px;
@@ -295,8 +247,9 @@ export default function Contact() {
         .ct-hero-title {
           font-size: clamp(2rem, 4vw, 3.2rem); font-weight: 900;
           color: #ffffff; line-height: 1.1; letter-spacing: -1px; margin: 0;
+          text-align: center;
         }
-        .ct-blue { color: #3b82f6; }
+        .ct-blue { color: #F97316; }
         .ct-hero-sub {
           font-size: 1rem; color: #94a3b8; line-height: 1.65; margin: 0;
         }
@@ -307,7 +260,7 @@ export default function Contact() {
           display: flex; align-items: center; gap: 7px;
           font-size: 0.82rem; font-weight: 600; color: #cbd5e1;
         }
-        .ct-hbadge svg { color: #60a5fa; flex-shrink: 0; }
+        .ct-hbadge svg { color: #FB923C; flex-shrink: 0; }
 
         /* Hero right */
         .ct-hero-right { position: relative; overflow: hidden; }
@@ -352,24 +305,29 @@ export default function Contact() {
         .ct-qcard:hover { background: #f8fafc; }
         .ct-qcard-icon {
           width: 52px; height: 52px; border-radius: 50%;
-          background: #1d4ed8; flex-shrink: 0;
+          background: #F97316; flex-shrink: 0;
           display: flex; align-items: center; justify-content: center;
         }
         .ct-qcard-body { flex: 1; }
         .ct-qcard-body h3 { font-size: 0.95rem; font-weight: 700; color: #0f172a; margin-bottom: 4px; }
         .ct-qcard-body p { font-size: 0.8rem; color: #64748b; line-height: 1.5; margin: 0; }
-        .ct-qcard-body a { color: #1d4ed8; text-decoration: none; }
+        .ct-qcard-body a { color: #16a34a; text-decoration: none; }
         .ct-qcard-body a:hover { text-decoration: underline; }
         .ct-email-sep { color: #94a3b8; margin: 0 2px; }
-        .ct-phone { font-size: 1rem; font-weight: 700; color: #1d4ed8 !important; }
+        .ct-phone { font-size: 1rem; font-weight: 700; color: #F97316 !important; }
         .ct-hours { color: #64748b; font-size: 0.78rem; }
         .ct-qcard-arrow {
           width: 36px; height: 36px; border-radius: 50%;
           border: 1.5px solid #e2e8f0; display: flex; align-items: center;
-          justify-content: center; color: #1d4ed8; flex-shrink: 0;
+          justify-content: center; color: #F97316; flex-shrink: 0;
           transition: background 0.2s, border-color 0.2s;
         }
-        .ct-qcard:hover .ct-qcard-arrow { background: #1d4ed8; border-color: #1d4ed8; color: #fff; }
+        .ct-qcard:hover .ct-qcard-arrow { background: #F97316; border-color: #F97316; color: #fff; }
+        .ct-qcard-icon--orange { background: #F97316; }
+        .ct-qcard-icon--green  { background: #16a34a; }
+        .ct-qcard-icon--blue   { background: #F97316; }
+
+        .ct-qcard:has(.ct-qcard-icon--green):hover .ct-qcard-arrow  { background: #16a34a; border-color: #16a34a; }
 
         /* ── Middle ── */
         .ct-mid { background: #f8fafc; padding: 56px 0 60px; }
@@ -388,7 +346,7 @@ export default function Contact() {
         .ct-form-eyebrow {
           display: flex; align-items: center; gap: 10px;
           font-size: 11px; font-weight: 700; letter-spacing: 4px;
-          color: #1d4ed8; text-transform: uppercase; margin-bottom: 14px;
+          color: #F97316; text-transform: uppercase; margin-bottom: 14px;
         }
         .ct-loc-title {
           font-size: clamp(1.5rem, 2.5vw, 2.1rem); font-weight: 900;
@@ -403,23 +361,23 @@ export default function Contact() {
           margin-bottom: 14px; cursor: default;
           transition: box-shadow 0.2s, border-color 0.2s;
         }
-        .ct-addr-card:hover { box-shadow: 0 4px 20px rgba(29,78,216,0.08); border-color: #bfdbfe; }
+        .ct-addr-card:hover { box-shadow: 0 4px 20px rgba(22,163,74,0.1); border-color: #bbf7d0; }
         .ct-addr-icon {
           width: 44px; height: 44px; border-radius: 10px;
-          background: #eff6ff; display: flex; align-items: center;
+          background: #f0fdf4; display: flex; align-items: center;
           justify-content: center; flex-shrink: 0;
         }
         .ct-addr-body { flex: 1; }
-        .ct-addr-body h4 { font-size: 0.88rem; font-weight: 700; color: #1d4ed8; margin-bottom: 3px; }
+        .ct-addr-body h4 { font-size: 0.88rem; font-weight: 700; color: #16a34a; margin-bottom: 3px; }
         .ct-addr-company { font-size: 0.75rem; font-weight: 600; color: #0f172a; margin-bottom: 5px; }
         .ct-addr-body p { font-size: 0.8rem; color: #64748b; line-height: 1.6; margin: 0; }
         .ct-addr-arrow {
           width: 32px; height: 32px; border-radius: 50%;
           border: 1.5px solid #e2e8f0; display: flex; align-items: center;
-          justify-content: center; color: #1d4ed8; flex-shrink: 0; margin-top: 4px;
+          justify-content: center; color: #16a34a; flex-shrink: 0; margin-top: 4px;
           transition: background 0.2s;
         }
-        .ct-addr-card:hover .ct-addr-arrow { background: #1d4ed8; border-color: #1d4ed8; color: #fff; }
+        .ct-addr-card:hover .ct-addr-arrow { background: #16a34a; border-color: #16a34a; color: #fff; }
 
         /* Form */
         .ct-form-title {
@@ -439,14 +397,14 @@ export default function Contact() {
           background: #ffffff; outline: none; transition: border-color 0.2s;
           font-family: inherit;
         }
-        .ct-field input:focus, .ct-field textarea:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.1); }
+        .ct-field input:focus, .ct-field textarea:focus { border-color: #F97316; box-shadow: 0 0 0 3px rgba(249,115,22,0.1); }
         .ct-field textarea { resize: vertical; min-height: 110px; }
         .ct-phone-wrap {
           display: flex; border: 1.5px solid #e2e8f0; border-radius: 8px;
           overflow: hidden; background: #ffffff;
           transition: border-color 0.2s;
         }
-        .ct-phone-wrap:focus-within { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.1); }
+        .ct-phone-wrap:focus-within { border-color: #F97316; box-shadow: 0 0 0 3px rgba(249,115,22,0.1); }
         .ct-phone-prefix {
           display: flex; align-items: center; gap: 6px;
           padding: 10px 12px; background: #f8fafc;
@@ -459,13 +417,13 @@ export default function Contact() {
           border-radius: 0 !important; padding: 10px 14px !important;
         }
         .ct-submit {
-          background: #0f2d6b; color: #ffffff;
+          background: #EA580C; color: #ffffff;
           border: none; border-radius: 8px; padding: 14px 28px;
           font-size: 0.95rem; font-weight: 700; cursor: pointer;
           transition: background 0.2s, transform 0.15s;
           text-align: center; letter-spacing: 0.3px;
         }
-        .ct-submit:hover { background: #1d4ed8; transform: translateY(-1px); }
+        .ct-submit:hover { background: #F97316; transform: translateY(-1px); }
         .ct-privacy {
           display: flex; align-items: center; gap: 7px;
           font-size: 0.78rem; color: #94a3b8; margin: 0;
@@ -473,9 +431,9 @@ export default function Contact() {
         .ct-success {
           display: flex; flex-direction: column; align-items: center;
           gap: 16px; padding: 48px 24px; text-align: center;
-          background: #eff6ff; border-radius: 14px; border: 1px solid #bfdbfe;
+          background: #fff7ed; border-radius: 14px; border: 1px solid #fed7aa;
         }
-        .ct-success h3 { font-size: 1.1rem; color: #1d4ed8; font-weight: 700; }
+        .ct-success h3 { font-size: 1.1rem; color: #F97316; font-weight: 700; }
 
         /* ── Trust Bar ── */
         .ct-trust {
@@ -492,9 +450,12 @@ export default function Contact() {
         }
         .ct-trust-icon {
           width: 48px; height: 48px; border-radius: 12px;
-          background: #eff6ff; display: flex; align-items: center;
+          background: #fff7ed; display: flex; align-items: center;
           justify-content: center; flex-shrink: 0;
         }
+
+        .ct-trust-item:nth-child(3) .ct-trust-icon,
+        .ct-trust-item:nth-child(7) .ct-trust-icon { background: #f0fdf4; }
         .ct-trust-item h4 { font-size: 0.88rem; font-weight: 700; color: #0f172a; margin-bottom: 2px; }
         .ct-trust-item p { font-size: 0.75rem; color: #64748b; margin: 0; }
         .ct-trust-sep { width: 1px; height: 50px; background: #f1f5f9; flex-shrink: 0; }

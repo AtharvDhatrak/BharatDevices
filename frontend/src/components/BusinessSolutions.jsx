@@ -34,7 +34,7 @@ export default function BusinessSolutions() {
             <div className="biz-checklist">
               {solutions.map((s, i) => (
                 <div key={i} className="biz-check-item">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1d4ed8" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
                     <polyline points="22 4 12 14.01 9 11.01"/>
                   </svg>
@@ -71,7 +71,7 @@ export default function BusinessSolutions() {
         .biz-label {
           font-size: 0.75rem;
           font-weight: 700;
-          color: #1d4ed8;
+          color: #F97316;
           letter-spacing: 0.08em;
           text-transform: uppercase;
         }
@@ -93,7 +93,7 @@ export default function BusinessSolutions() {
         .biz-cta {
           display: inline-flex;
           align-items: center;
-          background: #1d4ed8;
+          background: #EA580C;
           color: #ffffff;
           padding: 0.7rem 1.5rem;
           border-radius: 8px;
@@ -104,7 +104,7 @@ export default function BusinessSolutions() {
           transition: background 0.2s, transform 0.2s;
         }
 
-        .biz-cta:hover { background: #1e40af; transform: translateX(2px); }
+        .biz-cta:hover { background: #F97316; transform: translateX(2px); }
 
         .biz-right { position: relative; }
 

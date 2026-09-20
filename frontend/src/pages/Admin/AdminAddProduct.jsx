@@ -521,7 +521,7 @@ export default function AdminAddProduct() {
     <div style={styles.shell}>
       {uploading && (
         <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', zIndex: 9999 }}>
-          <div style={{ width: '50px', height: '50px', border: '5px solid #f3f3f3', borderTop: '5px solid #2563eb', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
+          <div style={{ width: '50px', height: '50px', border: '5px solid #f3f3f3', borderTop: '5px solid #F97316', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
           <p style={{ color: '#ffffff', marginTop: '12px', fontWeight: 600, fontSize: '0.95rem' }}>Uploading files...</p>
         </div>
       )}
@@ -538,9 +538,9 @@ export default function AdminAddProduct() {
         .stepper-container { display: flex; align-items: center; justify-content: space-between; width: 100%; overflow-x: auto; padding: 0.25rem 0; gap: 0.5rem; }
         .step-item { display: flex; flex-direction: column; align-items: center; flex: 1; position: relative; min-width: 60px; cursor: pointer; }
         .step-line { position: absolute; top: 17px; left: -50%; right: 50%; height: 2px; background-color: ${isDarkMode ? '#1e293b' : '#e2e8f0'}; z-index: 1; }
-        .step-line.active { background-color: #2563eb; }
+        .step-line.active { background-color: #F97316; }
         .step-circle { width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 0.85rem; z-index: 2; border: 2px solid ${isDarkMode ? '#334155' : '#cbd5e1'}; background-color: ${isDarkMode ? '#0f172a' : '#ffffff'}; color: ${isDarkMode ? '#94a3b8' : '#64748b'}; }
-        .step-circle.active { background-color: #2563eb; border-color: #2563eb; color: #ffffff; }
+        .step-circle.active { background-color: #F97316; border-color: #F97316; color: #ffffff; }
         .step-circle.completed { background-color: #10b981; border-color: #10b981; color: #ffffff; }
         .step-title { font-size: 0.75rem; font-weight: 600; margin-top: 0.35rem; text-align: center; color: ${isDarkMode ? '#cbd5e1' : '#334155'}; white-space: nowrap; }
         .step-desc { font-size: 0.7rem; color: ${isDarkMode ? '#64748b' : '#94a3b8'}; text-align: center; margin-top: 0.1rem; }
@@ -558,9 +558,9 @@ export default function AdminAddProduct() {
         <div style={styles.content} className="no-scrollbar">
           <div style={{ marginBottom: '1rem' }}>
             <nav style={{ fontSize: '0.8rem', marginBottom: '0.25rem' }}>
-              <Link to="/admin" style={{ color: isDarkMode ? '#60a5fa' : '#2563eb', textDecoration: 'none' }}>Dashboard</Link>
+              <Link to="/admin" style={{ color: isDarkMode ? '#FB923C' : '#F97316', textDecoration: 'none' }}>Dashboard</Link>
               <span style={{ margin: '0 0.4rem', color: styles.subText.color }}>›</span>
-              <Link to="/admin/products" style={{ color: isDarkMode ? '#60a5fa' : '#2563eb', textDecoration: 'none' }}>Products</Link>
+              <Link to="/admin/products" style={{ color: isDarkMode ? '#FB923C' : '#F97316', textDecoration: 'none' }}>Products</Link>
               <span style={{ margin: '0 0.4rem', color: styles.subText.color }}>›</span>
               <span style={{ color: styles.subText.color }}>{isEdit ? 'Edit' : 'Add'}</span>
             </nav>
@@ -579,7 +579,7 @@ export default function AdminAddProduct() {
                     <div className={`step-circle ${isActive ? 'active' : ''} ${isCompleted ? 'completed' : ''}`}>
                       {isCompleted ? '✓' : s.id}
                     </div>
-                    <span className="step-title" style={{ color: isActive ? (isDarkMode ? '#60a5fa' : '#2563eb') : undefined }}>{s.title}</span>
+                    <span className="step-title" style={{ color: isActive ? (isDarkMode ? '#FB923C' : '#F97316') : undefined }}>{s.title}</span>
                     <span className="step-desc">{s.desc}</span>
                   </div>
                 );
@@ -662,7 +662,7 @@ export default function AdminAddProduct() {
                     <h2 style={{ fontSize: '1rem', fontWeight: 600, margin: 0 }}>Specifications <span style={styles.required}>*</span></h2>
                     <p style={{ ...styles.subText, margin: 0 }}>At least one specification is required.</p>
                   </div>
-                  <button type="button" onClick={() => setSpecs(prev => [...prev, { id: Math.random(), key: '', value: '', type: 'text', options: [], isVariant: false }])} style={{ padding: '0.4rem 0.75rem', fontSize: '0.8rem', borderRadius: '6px', border: 'none', backgroundColor: '#2563eb', color: '#fff', cursor: 'pointer' }}>
+                  <button type="button" onClick={() => setSpecs(prev => [...prev, { id: Math.random(), key: '', value: '', type: 'text', options: [], isVariant: false }])} style={{ padding: '0.4rem 0.75rem', fontSize: '0.8rem', borderRadius: '6px', border: 'none', backgroundColor: '#F97316', color: '#fff', cursor: 'pointer' }}>
                     + Add Field
                   </button>
                 </div>
@@ -800,7 +800,7 @@ export default function AdminAddProduct() {
                         <div key={v.id || variantKey} style={{ padding: '0.75rem', marginBottom: '0.75rem', border: `1px dashed ${isDarkMode ? '#334155' : '#cbd5e1'}`, borderRadius: '6px' }}>
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
                             <span style={{ fontSize: '0.85rem', fontWeight: 500 }}>Variant: <strong>{variantKey}</strong></span>
-                            <label style={{ padding: '0.25rem 0.5rem', background: '#2563eb', color: '#fff', fontSize: '0.75rem', borderRadius: '4px', cursor: 'pointer' }}>
+                            <label style={{ padding: '0.25rem 0.5rem', background: '#F97316', color: '#fff', fontSize: '0.75rem', borderRadius: '4px', cursor: 'pointer' }}>
                               Upload Images
                               <input type="file" multiple accept="image/*" style={{ display: 'none' }} onChange={e => handleFileSelection(e, variantKey)} />
                             </label>
@@ -839,7 +839,7 @@ export default function AdminAddProduct() {
 
               <div>
                 {step < STEPS.length ? (
-                  <button type="button" onClick={() => changeStep(step + 1)} style={{ padding: '0.6rem 1.25rem', borderRadius: '8px', border: 'none', backgroundColor: '#2563eb', color: '#ffffff', cursor: 'pointer', fontWeight: 600 }}>
+                  <button type="button" onClick={() => changeStep(step + 1)} style={{ padding: '0.6rem 1.25rem', borderRadius: '8px', border: 'none', backgroundColor: '#F97316', color: '#ffffff', cursor: 'pointer', fontWeight: 600 }}>
                     Next
                   </button>
                 ) : (

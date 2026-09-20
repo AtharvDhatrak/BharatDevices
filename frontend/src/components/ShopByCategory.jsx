@@ -56,7 +56,7 @@ export default function ShopByCategory() {
         .cat-view-all {
           font-size: 0.85rem;
           font-weight: 600;
-          color: #1d4ed8;
+          color: #16a34a;
           text-decoration: none;
           display: flex;
           align-items: center;
@@ -84,8 +84,8 @@ export default function ShopByCategory() {
         }
 
         .cat-card:hover {
-          border-color: #1d4ed8;
-          box-shadow: 0 4px 16px rgba(29,78,216,0.1);
+          border-color: #F97316;
+          box-shadow: 0 4px 16px rgba(249,115,22,0.12);
           transform: translateY(-3px);
         }
 
