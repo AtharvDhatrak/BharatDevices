@@ -6,14 +6,9 @@ import httpService from '../../services/httpService';
 import { useTheme } from '../../components/ThemeContext';
 
 /* ─── Constants ─── */
-const BRANDS = ['Dell', 'HP', 'Lenovo', 'Asus', 'Acer', 'Logitech', 'Samsung', 'LG'];
 
 const STEPS = [
-  { id: 1, title: 'Basic Info', desc: 'Add basic product details' },
-  { id: 2, title: 'Specs', desc: 'Add product specifications' },
-  { id: 3, title: 'Pricing', desc: 'Set pricing and stock details' },
-  { id: 4, title: 'Media', desc: 'Upload images via backend' },
-  { id: 5, title: 'SEO', desc: 'SEO and other settings' },
+  { id: 1, title: 'Product Information', desc: 'Add product details, specifications, pricing and media' },
 ];
 
 /* ─── Main Component ─── */
@@ -51,6 +46,8 @@ export default function AdminAddProduct() {
   const [errorMessage, setErrorMessage] = useState('');
   const [uploading, setUploading] = useState(false);
   const [categoriesList, setCategoriesList] = useState([]);
+  const [brandsList, setBrandsList] = useState([]);
+  const [showPreview, setShowPreview] = useState(false);
 
   /* Fetch sidebar nav items and categories using httpService */
   useEffect(() => {
@@ -58,9 +55,10 @@ export default function AdminAddProduct() {
     const fetchMetadata = async () => {
       try {
         const role = (localStorage.getItem('userRole') || 'ADMIN').toUpperCase();
-        const [menuRes, catRes] = await Promise.allSettled([
+        const [menuRes, catRes, brandRes] = await Promise.allSettled([
           httpService.get('/base/menus', { params: { role } }),
-          httpService.get('/base/getCategories').catch(() => httpService.get('/getCategories'))
+          httpService.get('/base/getCategories').catch(() => httpService.get('/getCategories')),
+          httpService.get('/base/getBrands')
         ]);
 
         if (mounted) {
@@ -77,6 +75,10 @@ export default function AdminAddProduct() {
             } else if (catData && typeof catData === 'object') {
               setCategoriesList(Object.values(catData));
             }
+          }
+          if (brandRes.status === 'fulfilled') {
+            const bData = brandRes.value?.data?.data || brandRes.value?.data || [];
+            if (Array.isArray(bData)) setBrandsList(bData);
           }
         }
       } catch (err) {
@@ -146,7 +148,7 @@ export default function AdminAddProduct() {
         }));
       }
     }
-    return [{ key: 'Model', value: '', type: 'text', options: [], isVariant: false, id: 1 }];
+    return [{ id: 1, key: '', value: '', type: 'text', options: [], isVariant: false }];
   });
 
   const [variants, setVariants] = useState(() => productData?.variants || []);
@@ -349,23 +351,6 @@ export default function AdminAddProduct() {
     setBasic(b => ({ ...b, category: selectedCategoryName }));
     if (errorMessage && selectedCategoryName) setErrorMessage('');
     
-    const foundCat = categoriesList.find(c => {
-      const cName = (typeof c === 'string' ? c : (c.name || c.categoryName || c.id || '')).toLowerCase();
-      return cName === selectedCategoryName.toLowerCase();
-    });
-
-    if (foundCat && typeof foundCat === 'object' && Array.isArray(foundCat.specDefinitions) && !isEdit) {
-      const dynamicSpecs = foundCat.specDefinitions.map((def, idx) => ({
-        id: idx + 1,
-        key: def.label || def.key,
-        type: def.type || 'text',
-        options: def.options || [],
-        isVariant: def.isVariant || false,
-        isRequired: def.isRequired || false,
-        value: def.type === 'multiselect' || def.type === 'checkbox_group' ? [] : ''
-      }));
-      setSpecs(dynamicSpecs.length > 0 ? dynamicSpecs : [{ key: 'Model', value: '', type: 'text', options: [], isVariant: false, id: 1 }]);
-    }
   };
 
   useEffect(() => {
@@ -441,17 +426,12 @@ export default function AdminAddProduct() {
 
   const changeStep = (newStep) => {
     if (step === 1 && newStep > step && !validateStep1()) return;
-    if (step === 2 && newStep > step) {
-      if (!validateStep2()) return;
-      generateVariantMatrix();
-    }
-    if (step === 3 && newStep > step && !validateStep3()) return;
     if (newStep < 1 || newStep > STEPS.length) return;
     setStep(newStep);
   };
 
   const handleSave = async (asDraft = false) => {
-    if (!validateStep1() || !validateStep2() || !validateStep3()) return;
+    if (!validateStep1() || !validateStep2() || !validateStep3()) return; // validateStep3 checks pricing
     try {
       const productPayload = { ...buildProduct(), status: asDraft ? 'Draft' : quickInfo.status };
       await httpService.post('/base/saveProduct', productPayload);
@@ -481,40 +461,8 @@ export default function AdminAddProduct() {
   };
 
   const renderSpecValueInput = (item, index) => {
-    switch (item.type) {
-      case 'select':
-        return (
-          <select style={styles.input} value={item.value || ''} onChange={e => { const copy = [...specs]; copy[index].value = e.target.value; setSpecs(copy); }}>
-            <option value="">Select option</option>
-            {item.options.map(opt => <option key={opt} value={opt}>{opt}</option>)}
-          </select>
-        );
-      case 'multiselect':
-      case 'checkbox_group':
-        return (
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem', alignItems: 'center', minHeight: '40px', padding: '0.3rem', border: `1px solid ${isDarkMode ? '#334155' : '#cbd5e1'}`, borderRadius: '8px', background: isDarkMode ? '#0f172a' : '#fff' }}>
-            {item.options.map(opt => {
-              const selectedValues = Array.isArray(item.value) ? item.value : [];
-              const isChecked = selectedValues.includes(opt);
-              return (
-                <label key={opt} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.8rem', marginRight: '0.4rem', cursor: 'pointer' }}>
-                  <input type="checkbox" checked={isChecked} onChange={e => {
-                    const copy = [...specs];
-                    let currentVals = Array.isArray(copy[index].value) ? [...copy[index].value] : [];
-                    if (e.target.checked) currentVals.push(opt);
-                    else currentVals = currentVals.filter(v => v !== opt);
-                    copy[index].value = currentVals;
-                    setSpecs(copy);
-                  }} />
-                  {opt}
-                </label>
-              );
-            })}
-          </div>
-        );
-      default:
-        return <input style={styles.input} placeholder="Value options" value={typeof item.value === 'string' ? item.value : Array.isArray(item.value) ? item.value.join(', ') : JSON.stringify(item.value || '')} onChange={e => { const copy = [...specs]; copy[index].value = e.target.value; setSpecs(copy); }} />;
-    }
+    const displayValue = typeof item.value === 'string' ? item.value : Array.isArray(item.value) ? item.value.join(', ') : '';
+    return <input style={styles.input} placeholder="" value={displayValue} onChange={e => { const copy = [...specs]; copy[index].value = e.target.value; setSpecs(copy); }} />;
   };
 
   return (
@@ -593,7 +541,7 @@ export default function AdminAddProduct() {
             {/* Step 1: Basic Info */}
             {step === 1 && (
               <>
-                <h2 style={{ fontSize: '1rem', fontWeight: 600, marginBottom: '1rem' }}>Basic Information</h2>
+                <h2 style={{ fontSize: '1rem', fontWeight: 600, marginBottom: '1rem' }}>Product Information</h2>
                 <div style={styles.grid}>
                   <div>
                     <label style={styles.label}>Product Name <span style={styles.required}>*</span></label>
@@ -610,7 +558,10 @@ export default function AdminAddProduct() {
                     <label style={styles.label}>Brand <span style={styles.required}>*</span></label>
                     <select style={styles.input} value={basic.brand} onChange={e => { setBasic(b => ({ ...b, brand: e.target.value })); if (errorMessage) setErrorMessage(''); }}>
                       <option value="">Select brand</option>
-                      {BRANDS.map(b => <option key={b} value={b}>{b}</option>)}
+                      {brandsList.map(b => {
+                        const name = typeof b === 'string' ? b : (b.name || '');
+                        return <option key={b.id || name} value={name}>{name}</option>;
+                      })}
                     </select>
                   </div>
                   <div>
@@ -651,208 +602,155 @@ export default function AdminAddProduct() {
                   <label style={styles.label}>Tags</label>
                   <input style={styles.input} placeholder="e.g. gaming, lightweight (comma separated)" value={basic.tagsInput} onChange={e => setBasic(b => ({ ...b, tagsInput: e.target.value }))} />
                 </div>
-              </>
-            )}
 
-            {/* Step 2: Specifications */}
-            {step === 2 && (
-              <>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                  <div>
-                    <h2 style={{ fontSize: '1rem', fontWeight: 600, margin: 0 }}>Specifications <span style={styles.required}>*</span></h2>
-                    <p style={{ ...styles.subText, margin: 0 }}>At least one specification is required.</p>
-                  </div>
-                  <button type="button" onClick={() => setSpecs(prev => [...prev, { id: Math.random(), key: '', value: '', type: 'text', options: [], isVariant: false }])} style={{ padding: '0.4rem 0.75rem', fontSize: '0.8rem', borderRadius: '6px', border: 'none', backgroundColor: '#F97316', color: '#fff', cursor: 'pointer' }}>
-                    + Add Field
-                  </button>
-                </div>
-
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
-                  {specs.map((item, index) => (
-                    <div key={item.id} style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                      <input style={{ ...styles.input, flex: 1 }} placeholder="Specification Name" value={item.key} onChange={e => { const copy = [...specs]; copy[index].key = e.target.value; setSpecs(copy); if (errorMessage) setErrorMessage(''); }} />
-                      
-                      <div style={{ flex: 1.5 }}>
-                        {renderSpecValueInput(item, index)}
-                      </div>
-
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.75rem' }}>
-                        <input type="checkbox" checked={item.isVariant} onChange={e => { const copy = [...specs]; copy[index].isVariant = e.target.checked; setSpecs(copy); }} />
-                        <span>Variant</span>
-                      </div>
-
-                      <button type="button" onClick={() => setSpecs(specs.filter((_, i) => i !== index))} style={{ background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer', padding: '0.5rem', fontWeight: 'bold' }}>✕</button>
+                {/* Specifications */}
+                <div style={{ marginTop: '1.5rem', borderTop: `1px solid ${isDarkMode ? '#1e293b' : '#e2e8f0'}`, paddingTop: '1.25rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                    <div>
+                      <h2 style={{ fontSize: '1rem', fontWeight: 600, margin: 0 }}>Specifications <span style={styles.required}>*</span></h2>
+                      <p style={{ ...styles.subText, margin: 0 }}>At least one specification is required.</p>
                     </div>
-                  ))}
-                </div>
-              </>
-            )}
-
-            {/* Step 3: Pricing & Inventory Matrix */}
-            {step === 3 && (
-              <>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                  <div>
-                    <h2 style={{ fontSize: '1rem', fontWeight: 600, margin: 0 }}>Pricing & Inventory Matrix <span style={styles.required}>*</span></h2>
-                    <p style={{ ...styles.subText, margin: 0 }}>Set pricing for variants or base configurations.</p>
+                    <button type="button" onClick={() => setSpecs(prev => [...prev, { id: Math.random(), key: '', value: '', type: 'text', options: [], isVariant: false }])} style={{ padding: '0.4rem 0.75rem', fontSize: '0.8rem', borderRadius: '6px', border: 'none', backgroundColor: '#F97316', color: '#fff', cursor: 'pointer' }}>
+                      + Add Field
+                    </button>
                   </div>
-                  <button type="button" onClick={generateVariantMatrix} style={{ padding: '0.35rem 0.65rem', fontSize: '0.75rem', borderRadius: '6px', border: `1px solid ${isDarkMode ? '#334155' : '#cbd5e1'}`, background: 'transparent', color: isDarkMode ? '#f8fafc' : '#0f172a', cursor: 'pointer' }}>
-                    Regenerate Matrix
-                  </button>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
+                    {specs.map((item, index) => (
+                      <div key={item.id} style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                        <input style={{ ...styles.input, flex: 1 }} placeholder="Enter Specification Name" value={item.key} onChange={e => { const copy = [...specs]; copy[index].key = e.target.value; setSpecs(copy); if (errorMessage) setErrorMessage(''); }} />
+                        <div style={{ flex: 1.5 }}>{renderSpecValueInput(item, index)}</div>
+                        <button type="button" onClick={() => setSpecs(specs.filter((_, i) => i !== index))} style={{ background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer', padding: '0.5rem', fontWeight: 'bold' }}>✕</button>
+                      </div>
+                    ))}
+                  </div>
                 </div>
 
-                {variants.length > 0 ? (
-                  <div style={{ overflowX: 'auto' }}>
-                    <table className="matrix-table">
-                      <thead>
-                        <tr>
-                          {(() => {
-                            const firstCombo = typeof variants[0].combination === 'string' ? JSON.parse(variants[0].combination) : variants[0].combination;
-                            return Object.keys(firstCombo || {}).map(k => <th key={k}>{k.toUpperCase()}</th>);
-                          })()}
-                          <th>Variant SKU</th>
-                          <th>Price ($) <span style={styles.required}>*</span></th>
-                          <th>Stock Qty</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {variants.map((v, vIndex) => {
-                          const comboObj = typeof v.combination === 'string' ? JSON.parse(v.combination) : v.combination;
-                          return (
-                            <tr key={v.id || vIndex}>
-                              {Object.entries(comboObj || {}).map(([k, val]) => (
-                                <td key={k}><strong>{val}</strong></td>
-                              ))}
-                              <td>
-                                <input style={{ ...styles.input, minHeight: '34px' }} value={v.sku || ''} onChange={e => {
-                                  const copy = [...variants];
-                                  copy[vIndex].sku = e.target.value;
-                                  setVariants(copy);
-                                }} />
-                              </td>
-                              <td>
-                                <input type="number" style={{ ...styles.input, minHeight: '34px' }} placeholder="0.00" value={v.price ?? v.wholesale_price ?? ''} onChange={e => {
-                                  const copy = [...variants];
-                                  copy[vIndex].price = e.target.value;
-                                  setVariants(copy);
-                                  if (errorMessage) setErrorMessage('');
-                                }} />
-                              </td>
-                              <td>
-                                <input type="number" style={{ ...styles.input, minHeight: '34px' }} placeholder="Qty" value={v.stock ?? v.stock_quantity ?? ''} onChange={e => {
-                                  const copy = [...variants];
-                                  copy[vIndex].stock = e.target.value;
-                                  setVariants(copy);
-                                }} />
-                              </td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
-                  </div>
-                ) : (
-                  <div style={{ maxWidth: '400px', margin: '0 auto' }}>
+                {/* Pricing */}
+                <div style={{ marginTop: '1.5rem', borderTop: `1px solid ${isDarkMode ? '#1e293b' : '#e2e8f0'}`, paddingTop: '1.25rem' }}>
+                  <h2 style={{ fontSize: '1rem', fontWeight: 600, marginBottom: '0.25rem' }}>Pricing <span style={styles.required}>*</span></h2>
+                  <div style={{ maxWidth: '400px', marginTop: '0.75rem' }}>
                     <label style={styles.label}>Base Price ($) <span style={styles.required}>*</span></label>
                     <input type="number" style={styles.input} placeholder="0.00" value={pricing.price} onChange={e => { setPricing(p => ({ ...p, price: e.target.value })); if (errorMessage) setErrorMessage(''); }} />
-                    <p style={styles.subText}>No variant fields were checked in Step 2, so this flat price will apply.</p>
                   </div>
-                )}
-              </>
-            )}
-
-            {/* Step 4: Media & File Groups */}
-            {step === 4 && (
-              <>
-                <h2 style={{ fontSize: '1rem', fontWeight: 600, marginBottom: '0.25rem' }}>Media & File Groups</h2>
-                <p style={{ ...styles.subText, marginBottom: '1.25rem' }}>Upload files securely through your Spring Boot backend controller.</p>
-
-                <div style={{ marginBottom: '1.5rem', padding: '1rem', border: `1px solid ${isDarkMode ? '#334155' : '#cbd5e1'}`, borderRadius: '8px' }}>
-                  <label style={styles.label}>General Product Images</label>
-                  <div style={styles.uploadBox} onClick={() => document.getElementById('general-file-input').click()}>
-                    <p style={{ margin: 0, fontWeight: 500 }}>📂 Click to upload general images</p>
-                    <input id="general-file-input" type="file" multiple accept="image/*" style={{ display: 'none' }} onChange={e => handleFileSelection(e, 'general')} />
-                  </div>
-
-                  {media.generalImages.length > 0 && (
-                    <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginTop: '0.75rem' }}>
-                      {media.generalImages.map((url, imgIdx) => (
-                        <div key={imgIdx} style={{ position: 'relative' }}>
-                          <img src={url} alt="General product" className="thumb-preview" />
-                          <button type="button" onClick={() => {
-                            const updated = media.generalImages.filter((_, i) => i !== imgIdx);
-                            setMedia(m => ({ ...m, generalImages: updated }));
-                          }} style={{ position: 'absolute', top: -5, right: -5, background: '#ef4444', color: '#fff', border: 'none', borderRadius: '50%', width: '20px', height: '20px', fontSize: '10px', cursor: 'pointer' }}>✕</button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
                 </div>
 
-                {variants.length > 0 && (
-                  <div style={{ marginBottom: '1.5rem' }}>
-                    <h3 style={{ fontSize: '0.9rem', fontWeight: 600, marginBottom: '0.75rem' }}>Variant-Specific Images</h3>
-                    {variants.map(v => {
-                      const comboObj = typeof v.combination === 'string' ? JSON.parse(v.combination) : v.combination;
-                      const variantKey = Object.values(comboObj || {}).join('-');
-                      const groupImages = media.variantImages[variantKey] || v.imageUrls || [];
-                      return (
-                        <div key={v.id || variantKey} style={{ padding: '0.75rem', marginBottom: '0.75rem', border: `1px dashed ${isDarkMode ? '#334155' : '#cbd5e1'}`, borderRadius: '6px' }}>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-                            <span style={{ fontSize: '0.85rem', fontWeight: 500 }}>Variant: <strong>{variantKey}</strong></span>
-                            <label style={{ padding: '0.25rem 0.5rem', background: '#F97316', color: '#fff', fontSize: '0.75rem', borderRadius: '4px', cursor: 'pointer' }}>
-                              Upload Images
-                              <input type="file" multiple accept="image/*" style={{ display: 'none' }} onChange={e => handleFileSelection(e, variantKey)} />
-                            </label>
+                {/* Media */}
+                <div style={{ marginTop: '1.5rem', borderTop: `1px solid ${isDarkMode ? '#1e293b' : '#e2e8f0'}`, paddingTop: '1.25rem' }}>
+                  <h2 style={{ fontSize: '1rem', fontWeight: 600, marginBottom: '0.75rem' }}>Media</h2>
+                  <div style={{ padding: '1rem', border: `1px solid ${isDarkMode ? '#334155' : '#cbd5e1'}`, borderRadius: '8px' }}>
+                    <label style={styles.label}>Product Images</label>
+                    <div style={styles.uploadBox} onClick={() => document.getElementById('general-file-input').click()}>
+                      <p style={{ margin: 0, fontWeight: 500 }}>📂 Click to upload images</p>
+                      <input id="general-file-input" type="file" multiple accept="image/*" style={{ display: 'none' }} onChange={e => handleFileSelection(e, 'general')} />
+                    </div>
+                    {media.generalImages.length > 0 && (
+                      <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginTop: '0.75rem' }}>
+                        {media.generalImages.map((url, imgIdx) => (
+                          <div key={imgIdx} style={{ position: 'relative' }}>
+                            <img src={url} alt="Product" className="thumb-preview" />
+                            <button type="button" onClick={() => setMedia(m => ({ ...m, generalImages: m.generalImages.filter((_, i) => i !== imgIdx) }))} style={{ position: 'absolute', top: -5, right: -5, background: '#ef4444', color: '#fff', border: 'none', borderRadius: '50%', width: '20px', height: '20px', fontSize: '10px', cursor: 'pointer' }}>✕</button>
                           </div>
-                          {groupImages.length > 0 && (
-                            <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
-                              {groupImages.map((u, uIdx) => (
-                                <img key={uIdx} src={u} alt="Variant thumbnail" className="thumb-preview" style={{ width: '45px', height: '45px' }} />
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })}
+                        ))}
+                      </div>
+                    )}
                   </div>
-                )}
-              </>
-            )}
-
-            {/* Step 5: SEO */}
-            {step === 5 && (
-              <>
-                <h2 style={{ fontSize: '1rem', fontWeight: 600, marginBottom: '1rem' }}>SEO Settings</h2>
-                <div>
-                  <label style={styles.label}>SEO Slug</label>
-                  <input style={styles.input} placeholder="product-slug" value={seo.slug} onChange={e => setSeo(s => ({ ...s, slug: e.target.value }))} />
                 </div>
               </>
             )}
 
             {/* Bottom Actions */}
             <div style={styles.actions}>
-              <button type="button" onClick={() => { if (errorMessage) setErrorMessage(''); changeStep(step - 1); }} disabled={step === 1} style={{ padding: '0.6rem 1.0rem', borderRadius: '8px', border: `1px solid ${isDarkMode ? '#334155' : '#cbd5e1'}`, backgroundColor: 'transparent', color: isDarkMode ? '#f8fafc' : '#334155', cursor: step === 1 ? 'not-allowed' : 'pointer', opacity: step === 1 ? 0.4 : 1 }}>
-                Previous
-              </button>
-
-              <div>
-                {step < STEPS.length ? (
-                  <button type="button" onClick={() => changeStep(step + 1)} style={{ padding: '0.6rem 1.25rem', borderRadius: '8px', border: 'none', backgroundColor: '#F97316', color: '#ffffff', cursor: 'pointer', fontWeight: 600 }}>
-                    Next
-                  </button>
-                ) : (
-                  <button type="button" onClick={() => handleSave(false)} style={{ padding: '0.6rem 1.25rem', borderRadius: '8px', border: 'none', backgroundColor: '#10b981', color: '#ffffff', cursor: 'pointer', fontWeight: 600 }}>
-                    {saved ? 'Saved!' : isEdit ? 'Update Product' : 'Save Product'}
-                  </button>
-                )}
+              <div />
+              <div style={{ display: 'flex', gap: '0.75rem' }}>
+                <button type="button" onClick={() => setShowPreview(true)} style={{ padding: '0.6rem 1.25rem', borderRadius: '8px', border: `1px solid ${isDarkMode ? '#334155' : '#cbd5e1'}`, backgroundColor: 'transparent', color: isDarkMode ? '#f8fafc' : '#334155', cursor: 'pointer', fontWeight: 600 }}>
+                  Preview
+                </button>
+                <button type="button" onClick={() => handleSave(false)} style={{ padding: '0.6rem 1.25rem', borderRadius: '8px', border: 'none', backgroundColor: '#10b981', color: '#ffffff', cursor: 'pointer', fontWeight: 600 }}>
+                  {saved ? 'Saved!' : isEdit ? 'Update Product' : 'Save Product'}
+                </button>
               </div>
             </div>
 
           </div>
         </div>
       </div>
+
+      {/* Preview Modal */}
+      {showPreview && (
+        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.6)', zIndex: 10000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
+          <div style={{ backgroundColor: isDarkMode ? '#131f37' : '#ffffff', borderRadius: '12px', width: '100%', maxWidth: '700px', maxHeight: '90vh', overflowY: 'auto', padding: '1.75rem', boxShadow: '0 20px 60px rgba(0,0,0,0.4)' }}>
+            {/* Header */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+              <h2 style={{ fontSize: '1.1rem', fontWeight: 700, margin: 0, color: isDarkMode ? '#f1f5f9' : '#0f172a' }}>Product Preview</h2>
+              <button type="button" onClick={() => setShowPreview(false)} style={{ background: 'transparent', border: 'none', fontSize: '1.25rem', cursor: 'pointer', color: isDarkMode ? '#94a3b8' : '#64748b' }}>✕</button>
+            </div>
+
+            {/* Product Images */}
+            {media.generalImages.length > 0 && (
+              <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '1.25rem' }}>
+                {media.generalImages.map((url, i) => (
+                  <img key={i} src={url} alt="Product" style={{ width: '80px', height: '80px', objectFit: 'cover', borderRadius: '8px', border: `1px solid ${isDarkMode ? '#334155' : '#e2e8f0'}` }} />
+                ))}
+              </div>
+            )}
+
+            {/* Basic Info */}
+            <div style={{ marginBottom: '1.25rem' }}>
+              <h3 style={{ fontSize: '1rem', fontWeight: 700, margin: '0 0 0.25rem', color: isDarkMode ? '#f1f5f9' : '#0f172a' }}>{basic.name || '—'}</h3>
+              <p style={{ fontSize: '0.8rem', color: isDarkMode ? '#94a3b8' : '#64748b', margin: 0 }}>{basic.brand} {basic.modelNumber && `· ${basic.modelNumber}`} {basic.category && `· ${basic.category}`}</p>
+            </div>
+
+            {basic.shortDescription && (
+              <div style={{ marginBottom: '1.25rem', padding: '0.75rem', backgroundColor: isDarkMode ? '#0f172a' : '#f8fafc', borderRadius: '8px', fontSize: '0.875rem', color: isDarkMode ? '#cbd5e1' : '#475569' }}>
+                {basic.shortDescription}
+              </div>
+            )}
+
+            {/* Price */}
+            {pricing.price && (
+              <div style={{ marginBottom: '1.25rem' }}>
+                <span style={{ fontSize: '1.25rem', fontWeight: 700, color: '#F97316' }}>₹{pricing.price}</span>
+              </div>
+            )}
+
+            {/* Specifications */}
+            {specs.filter(s => s.key.trim()).length > 0 && (
+              <div style={{ marginBottom: '1.25rem' }}>
+                <h4 style={{ fontSize: '0.875rem', fontWeight: 600, marginBottom: '0.5rem', color: isDarkMode ? '#cbd5e1' : '#334155' }}>Specifications</h4>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
+                  <tbody>
+                    {specs.filter(s => s.key.trim()).map((s, i) => (
+                      <tr key={i} style={{ borderBottom: `1px solid ${isDarkMode ? '#1e293b' : '#e2e8f0'}` }}>
+                        <td style={{ padding: '0.5rem 0.75rem', fontWeight: 600, color: isDarkMode ? '#94a3b8' : '#64748b', width: '40%' }}>{s.key}</td>
+                        <td style={{ padding: '0.5rem 0.75rem', color: isDarkMode ? '#f1f5f9' : '#0f172a' }}>{Array.isArray(s.value) ? s.value.join(', ') : s.value || '—'}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+
+            {/* Tags */}
+            {basic.tagsInput && (
+              <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap', marginBottom: '1.25rem' }}>
+                {basic.tagsInput.split(',').map(t => t.trim()).filter(Boolean).map((tag, i) => (
+                  <span key={i} style={{ padding: '0.2rem 0.6rem', backgroundColor: isDarkMode ? '#0f172a' : '#f1f5f9', border: `1px solid ${isDarkMode ? '#334155' : '#e2e8f0'}`, borderRadius: '999px', fontSize: '0.75rem', color: isDarkMode ? '#94a3b8' : '#64748b' }}>{tag}</span>
+                ))}
+              </div>
+            )}
+
+            {/* Footer Buttons */}
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '1rem', paddingTop: '1rem', borderTop: `1px solid ${isDarkMode ? '#1e293b' : '#e2e8f0'}` }}>
+              <button type="button" onClick={() => setShowPreview(false)} style={{ padding: '0.6rem 1.25rem', borderRadius: '8px', border: `1px solid ${isDarkMode ? '#334155' : '#cbd5e1'}`, backgroundColor: 'transparent', color: isDarkMode ? '#f8fafc' : '#334155', cursor: 'pointer', fontWeight: 600 }}>
+                Edit
+              </button>
+              <button type="button" onClick={() => { setShowPreview(false); handleSave(false); }} style={{ padding: '0.6rem 1.25rem', borderRadius: '8px', border: 'none', backgroundColor: '#10b981', color: '#ffffff', cursor: 'pointer', fontWeight: 600 }}>
+                {isEdit ? 'Update Product' : 'Save Product'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

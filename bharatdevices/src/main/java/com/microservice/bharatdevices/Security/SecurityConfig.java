@@ -38,6 +38,10 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                 .requestMatchers("/auth/**").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/enquiry/submit").permitAll()
+                .requestMatchers("/api/enquiry/**").authenticated()
+.requestMatchers(HttpMethod.GET, "/base/getProducts").permitAll()
+                .requestMatchers(HttpMethod.GET, "/base/getBrands").permitAll()
                 .anyRequest().authenticated()
             )
             // 3. Use the injected field here

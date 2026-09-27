@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate, useLocation, Routes, Route } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import httpService from "../../services/httpService";
-import Sidebar from "./AdminSidebar"; // Imported standalone component
+import Sidebar from "./AdminSidebar";
+import AdminEnquiries from "./AdminEnquiries";
 
 const DashboardHome = () => (
   <div style={{ color: "#f8fafc" }}>
@@ -20,6 +21,13 @@ const ProductsList = () => (
     </div>
   </div>
 );
+
+function renderPage(pathname) {
+  if (pathname.includes('/enquiries')) return <AdminEnquiries />;
+if (pathname === '/admin' || pathname.includes('/dashboard')) return <DashboardHome />;
+  if (pathname.includes('/products')) return <ProductsList />;
+  return <DashboardHome />;
+}
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
@@ -77,19 +85,7 @@ export default function AdminDashboard() {
 
       {/* MAIN ROUTE CONTENT */}
       <main style={{ flex: 1, padding: "2rem", background: "#050c1a" }}>
-        <Routes>
-          <Route index element={<DashboardHome />} />
-          <Route path="dashboard" element={<DashboardHome />} />
-          <Route path="products" element={<ProductsList />} />
-          <Route
-            path="*"
-            element={
-              <div style={{ color: "#94a3b8" }}>
-                Active Route: <code>{location.pathname}</code> — Page implementation in progress.
-              </div>
-            }
-          />
-        </Routes>
+        {renderPage(location.pathname)}
       </main>
     </div>
   );

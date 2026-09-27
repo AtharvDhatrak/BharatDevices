@@ -258,7 +258,22 @@ export default function Sidebar({ navItems = [], loading, activePath, onNavigate
   const [isMobile, setIsMobile] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
 
-  const structuredItems = buildMenuTree(navItems);
+  const structuredItems = buildMenuTree(navItems).map(item => {
+    const title = (item.title || '').toLowerCase();
+    if (title === 'products' && Array.isArray(item.children)) {
+      const alreadyHasBrand = item.children.some(c => (c.path || '').includes('add-brand'));
+      if (!alreadyHasBrand) {
+        return {
+          ...item,
+          children: [
+            ...item.children,
+            { id: 'add-brand-static', title: 'Add Brand', path: '/admin/add-brand', icon: 'label' }
+          ]
+        };
+      }
+    }
+    return item;
+  });
 
   /* Responsive screen watcher */
   useEffect(() => {

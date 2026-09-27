@@ -1,14 +1,67 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { mockProducts } from '../data/mockData';
+
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8089';
 
 export default function ProductDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const product = mockProducts.find(p => p.id === Number(id)) || mockProducts[0];
 
+  const [product, setProduct] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [activeImg, setActiveImg] = useState(0);
-  const images = product.images || [product.image];
+
+  const isScraped = id?.startsWith('s-');
+  const numericId = isScraped ? id.substring(2) : id;
+
+  useEffect(() => {
+    setLoading(true);
+    setActiveImg(0);
+
+    if (isScraped) {
+      fetch(`${API_BASE}/api/products/scraped/${numericId}`)
+        .then(r => r.ok ? r.json() : null)
+        .then(data => {
+          if (data) setProduct(normalizeScraped(data));
+          else setProduct(null);
+        })
+        .catch(() => setProduct(null))
+        .finally(() => setLoading(false));
+    } else {
+      fetch(`${API_BASE}/base/getProducts`)
+        .then(r => r.json())
+        .then(data => {
+          const list = data?.data || data || [];
+          const found = (Array.isArray(list) ? list : []).find(p => String(p.id) === String(id));
+          setProduct(found ? normalizeManual(found) : null);
+        })
+        .catch(() => setProduct(null))
+        .finally(() => setLoading(false));
+    }
+  }, [id]);
+
+  if (loading) {
+    return (
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh', color: '#64748b', fontSize: '0.9rem' }}>
+        Loading product...
+      </div>
+    );
+  }
+
+  if (!product) {
+    return (
+      <div style={{ maxWidth: 600, margin: '4rem auto', textAlign: 'center', color: '#64748b' }}>
+        <p style={{ fontSize: '1.1rem', fontWeight: 600, marginBottom: '1rem' }}>Product not found.</p>
+        <Link to="/products" style={{ color: '#F97316', fontWeight: 600, textDecoration: 'none' }}>← Back to Products</Link>
+      </div>
+    );
+  }
+
+  const images = product.images?.length ? product.images : [product.image].filter(Boolean);
+
+  const enquiryUrl = isScraped
+    ? `/enquiry?productName=${encodeURIComponent(product.name)}&productCategory=${encodeURIComponent(product.category || '')}`
+    : `/enquiry?product=${product.id}`;
 
   return (
     <div className="detail-page">
@@ -16,11 +69,9 @@ export default function ProductDetail() {
         {/* Breadcrumb */}
         <nav className="breadcrumb">
           <Link to="/" className="bread-link">Home</Link>
-          <span className="bread-sep">&rsaquo;</span>
-          <Link to="/products" className="bread-link">
-            {product.categorySlug ? product.categorySlug.charAt(0).toUpperCase() + product.categorySlug.slice(1) : 'Products'}
-          </Link>
-          <span className="bread-sep">&rsaquo;</span>
+          <span className="bread-sep">›</span>
+          <Link to="/products" className="bread-link">Products</Link>
+          <span className="bread-sep">›</span>
           <span className="bread-current">{product.name}</span>
         </nav>
 
@@ -34,37 +85,82 @@ export default function ProductDetail() {
                   className={`thumb-btn${activeImg === i ? ' thumb-active' : ''}`}
                   onClick={() => setActiveImg(i)}
                 >
-                  <img src={img} alt={`View ${i + 1}`} className="thumb-img" />
+                  <img src={img} alt={`View ${i + 1}`} className="thumb-img"
+                    onError={e => { e.target.src = 'https://images.unsplash.com/photo-1496181133206-80ce9b88a853?auto=format&fit=crop&w=120&q=60'; }} />
                 </button>
               ))}
             </div>
             <div className="main-img-wrap">
-              <img src={images[activeImg]} alt={product.name} className="main-img" />
+              <img
+                src={images[activeImg] || ''}
+                alt={product.name}
+                className="main-img"
+                onError={e => { e.target.src = 'https://images.unsplash.com/photo-1496181133206-80ce9b88a853?auto=format&fit=crop&w=600&q=80'; }}
+              />
             </div>
           </div>
 
           {/* Product Info */}
           <div className="detail-info">
+            <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', alignItems: 'center' }}>
+              <span className="detail-category-badge">{product.category}</span>
+              {isScraped && (
+                <span style={{ background: '#eff6ff', color: '#1d4ed8', fontSize: '0.72rem', fontWeight: 600, padding: '0.2rem 0.6rem', borderRadius: '20px', border: '1px solid #bfdbfe' }}>
+                  Source: {product.sourceName}
+                </span>
+              )}
+            </div>
+
             <h1 className="detail-name">{product.name}</h1>
-            <span className="detail-category-badge">{product.category}</span>
 
             <div className="detail-meta">
-              <div className="meta-row">
-                <span className="meta-label">Brand:</span>
-                <span className="meta-value">{product.brand}</span>
-              </div>
+              {product.brand && product.brand !== '—' && (
+                <div className="meta-row">
+                  <span className="meta-label">Brand:</span>
+                  <span className="meta-value">{product.brand}</span>
+                </div>
+              )}
               <div className="meta-row">
                 <span className="meta-label">Category:</span>
-                <span className="meta-value">Business {product.category}</span>
+                <span className="meta-value">{product.category}</span>
               </div>
+              {product.rating && (
+                <div className="meta-row">
+                  <span className="meta-label">Rating:</span>
+                  <span className="meta-value">★ {product.rating}</span>
+                </div>
+              )}
+              {product.stock && (
+                <div className="meta-row">
+                  <span className="meta-label">Availability:</span>
+                  <span className="meta-value" style={{ color: product.stock.toLowerCase().includes('in stock') ? '#16a34a' : '#ef4444' }}>
+                    {product.stock}
+                  </span>
+                </div>
+              )}
             </div>
 
             <div className="detail-price-block">
-              <span className="detail-price">₹{product.price.toLocaleString('en-IN')} onwards</span>
-              <span className="price-note">*Price varies based on configuration</span>
+              {isScraped ? (
+                <>
+                  <span className="detail-price">£{parseFloat(product.price).toFixed(2)}</span>
+                  <span className="price-note">Price from source (books.toscrape.com). Contact us for INR bulk pricing.</span>
+                </>
+              ) : (
+                <>
+                  <span className="detail-price">₹{Number(product.price).toLocaleString('en-IN')} onwards</span>
+                  <span className="price-note">*Price varies based on configuration</span>
+                </>
+              )}
             </div>
 
-            {product.features && (
+            {product.description && (
+              <p style={{ fontSize: '0.875rem', color: '#475569', lineHeight: 1.7, margin: 0 }}>
+                {product.description}
+              </p>
+            )}
+
+            {product.features && product.features.length > 0 && (
               <ul className="features-list">
                 {product.features.map((f, i) => (
                   <li key={i} className="feature-item">
@@ -78,36 +174,50 @@ export default function ProductDetail() {
             )}
 
             <div className="detail-ctas">
-              <button
-                className="btn-quote"
-                onClick={() => navigate(`/enquiry?product=${product.id}`)}
-              >
-                Request Quote
+              <button className="btn-quote" onClick={() => navigate(enquiryUrl)}>
+                Send Bulk Enquiry
               </button>
-              <button className="btn-datasheet">
-                Download Datasheet
-              </button>
+              {isScraped && product.sourceUrl && (
+                <a
+                  href={product.sourceUrl}
+                  target="_blank"
+                  rel="noreferrer noopener"
+                  className="btn-datasheet"
+                  style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}
+                >
+                  View Source ↗
+                </a>
+              )}
             </div>
           </div>
         </div>
 
-        {/* Specs + Need Help */}
+        {/* Specs / Description + Need Help */}
         <div className="bottom-grid">
-          {product.specs && (
-            <div className="specs-card">
-              <h2 className="specs-heading">Specifications</h2>
-              <table className="specs-table">
-                <tbody>
-                  {Object.entries(product.specs).map(([key, val]) => (
-                    <tr key={key} className="spec-row">
-                      <td className="spec-key">{key}</td>
-                      <td className="spec-val">{val}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
+          <div className="specs-card">
+            {product.specs && Object.keys(product.specs).length > 0 ? (
+              <>
+                <h2 className="specs-heading">Specifications</h2>
+                <table className="specs-table">
+                  <tbody>
+                    {Object.entries(product.specs).map(([key, val]) => (
+                      <tr key={key} className="spec-row">
+                        <td className="spec-key">{key}</td>
+                        <td className="spec-val">{String(val)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </>
+            ) : product.description ? (
+              <>
+                <h2 className="specs-heading">Description</h2>
+                <p style={{ fontSize: '0.875rem', color: '#475569', lineHeight: 1.75, margin: 0 }}>{product.description}</p>
+              </>
+            ) : (
+              <p style={{ color: '#94a3b8', fontSize: '0.875rem' }}>No specifications available.</p>
+            )}
+          </div>
 
           <div className="need-help-card">
             <h3 className="help-heading">Need Help?</h3>
@@ -130,307 +240,110 @@ export default function ProductDetail() {
       </div>
 
       <style>{`
-        .detail-page {
-          background: #f8fafc;
-          min-height: 100vh;
-          padding: 1.5rem;
-        }
-
-        .detail-container {
-          max-width: 1200px;
-          margin: 0 auto;
-          display: flex;
-          flex-direction: column;
-          gap: 1.5rem;
-        }
-
-        /* Breadcrumb */
-        .breadcrumb {
-          display: flex;
-          align-items: center;
-          gap: 0.4rem;
-          font-size: 0.83rem;
-        }
-
-        .bread-link {
-          color: #16a34a;
-          text-decoration: none;
-          font-weight: 500;
-        }
-
+        .detail-page { background: #f8fafc; min-height: 100vh; padding: 1.5rem; }
+        .detail-container { max-width: 1200px; margin: 0 auto; display: flex; flex-direction: column; gap: 1.5rem; }
+        .breadcrumb { display: flex; align-items: center; gap: 0.4rem; font-size: 0.83rem; }
+        .bread-link { color: #16a34a; text-decoration: none; font-weight: 500; }
         .bread-link:hover { text-decoration: underline; }
-
         .bread-sep { color: #94a3b8; }
-
-        .bread-current {
-          color: #374151;
-          font-weight: 500;
-        }
-
-        /* Main Grid */
-        .detail-grid {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 2rem;
-          background: #ffffff;
-          border: 1px solid #e5e7eb;
-          border-radius: 14px;
-          padding: 1.75rem;
-        }
-
-        /* Gallery */
-        .gallery {
-          display: flex;
-          gap: 0.75rem;
-        }
-
-        .thumbnail-col {
-          display: flex;
-          flex-direction: column;
-          gap: 0.5rem;
-          flex-shrink: 0;
-        }
-
-        .thumb-btn {
-          width: 60px;
-          height: 60px;
-          border: 2px solid #e5e7eb;
-          border-radius: 8px;
-          overflow: hidden;
-          cursor: pointer;
-          padding: 0;
-          background: #f8fafc;
-          transition: border-color 0.2s;
-        }
-
+        .bread-current { color: #374151; font-weight: 500; }
+        .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; background: #ffffff; border: 1px solid #e5e7eb; border-radius: 14px; padding: 1.75rem; }
+        .gallery { display: flex; gap: 0.75rem; }
+        .thumbnail-col { display: flex; flex-direction: column; gap: 0.5rem; flex-shrink: 0; }
+        .thumb-btn { width: 60px; height: 60px; border: 2px solid #e5e7eb; border-radius: 8px; overflow: hidden; cursor: pointer; padding: 0; background: #f8fafc; transition: border-color 0.2s; }
         .thumb-btn.thumb-active { border-color: #F97316; }
-
         .thumb-btn:hover { border-color: #93c5fd; }
-
-        .thumb-img {
-          width: 100%;
-          height: 100%;
-          object-fit: cover;
-          display: block;
-        }
-
-        .main-img-wrap {
-          flex: 1;
-          border-radius: 10px;
-          overflow: hidden;
-          background: #f8fafc;
-          aspect-ratio: 4/3;
-        }
-
-        .main-img {
-          width: 100%;
-          height: 100%;
-          object-fit: cover;
-          display: block;
-        }
-
-        /* Info */
-        .detail-info {
-          display: flex;
-          flex-direction: column;
-          gap: 1rem;
-        }
-
-        .detail-name {
-          font-size: 1.5rem;
-          font-weight: 800;
-          color: #1e293b;
-          line-height: 1.2;
-        }
-
-        .detail-category-badge {
-          display: inline-block;
-          background: #f0fdf4;
-          color: #16a34a;
-          font-size: 0.75rem;
-          font-weight: 600;
-          padding: 0.25rem 0.75rem;
-          border-radius: 20px;
-          border: 1px solid #bbf7d0;
-        }
-
-        .detail-meta {
-          display: flex;
-          flex-direction: column;
-          gap: 0.3rem;
-        }
-
-        .meta-row {
-          display: flex;
-          gap: 0.5rem;
-          font-size: 0.85rem;
-        }
-
+        .thumb-img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .main-img-wrap { flex: 1; border-radius: 10px; overflow: hidden; background: #f8fafc; aspect-ratio: 4/3; }
+        .main-img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .detail-info { display: flex; flex-direction: column; gap: 1rem; }
+        .detail-name { font-size: 1.5rem; font-weight: 800; color: #1e293b; line-height: 1.2; margin: 0; }
+        .detail-category-badge { display: inline-block; background: #f0fdf4; color: #16a34a; font-size: 0.75rem; font-weight: 600; padding: 0.25rem 0.75rem; border-radius: 20px; border: 1px solid #bbf7d0; }
+        .detail-meta { display: flex; flex-direction: column; gap: 0.3rem; }
+        .meta-row { display: flex; gap: 0.5rem; font-size: 0.85rem; }
         .meta-label { color: #64748b; }
         .meta-value { color: #374151; font-weight: 600; }
-
-        .detail-price-block {
-          display: flex;
-          flex-direction: column;
-          gap: 0.2rem;
-        }
-
-        .detail-price {
-          font-size: 1.5rem;
-          font-weight: 800;
-          color: #b45309;
-        }
-
-        .price-note {
-          font-size: 0.75rem;
-          color: #94a3b8;
-        }
-
-        .features-list {
-          list-style: none;
-          padding: 0;
-          margin: 0;
-          display: flex;
-          flex-direction: column;
-          gap: 0.5rem;
-        }
-
-        .feature-item {
-          display: flex;
-          align-items: center;
-          gap: 0.5rem;
-          font-size: 0.85rem;
-          color: #374151;
-        }
-
-        .detail-ctas {
-          display: flex;
-          gap: 0.75rem;
-          flex-wrap: wrap;
-          margin-top: 0.5rem;
-        }
-
-        .btn-quote {
-          background: #F97316;
-          color: #ffffff;
-          border: none;
-          border-radius: 8px;
-          padding: 0.75rem 1.5rem;
-          font-size: 0.9rem;
-          font-weight: 600;
-          cursor: pointer;
-          transition: background 0.2s;
-        }
-
+        .detail-price-block { display: flex; flex-direction: column; gap: 0.2rem; }
+        .detail-price { font-size: 1.5rem; font-weight: 800; color: #b45309; }
+        .price-note { font-size: 0.75rem; color: #94a3b8; }
+        .features-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 0.5rem; }
+        .feature-item { display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; color: #374151; }
+        .detail-ctas { display: flex; gap: 0.75rem; flex-wrap: wrap; margin-top: 0.5rem; }
+        .btn-quote { background: #F97316; color: #ffffff; border: none; border-radius: 8px; padding: 0.75rem 1.5rem; font-size: 0.9rem; font-weight: 600; cursor: pointer; transition: background 0.2s; }
         .btn-quote:hover { background: #EA580C; }
-
-        .btn-datasheet {
-          background: #ffffff;
-          color: #374151;
-          border: 1px solid #d1d5db;
-          border-radius: 8px;
-          padding: 0.75rem 1.5rem;
-          font-size: 0.9rem;
-          font-weight: 600;
-          cursor: pointer;
-          transition: border-color 0.2s, background 0.2s;
-        }
-
+        .btn-datasheet { background: #ffffff; color: #374151; border: 1px solid #d1d5db; border-radius: 8px; padding: 0.75rem 1.5rem; font-size: 0.9rem; font-weight: 600; cursor: pointer; transition: border-color 0.2s, color 0.2s; }
         .btn-datasheet:hover { border-color: #16a34a; color: #16a34a; }
-
-        /* Bottom Grid */
-        .bottom-grid {
-          display: grid;
-          grid-template-columns: 1fr 280px;
-          gap: 1.5rem;
-        }
-
-        .specs-card {
-          background: #ffffff;
-          border: 1px solid #e5e7eb;
-          border-radius: 14px;
-          padding: 1.5rem;
-        }
-
-        .specs-heading {
-          font-size: 1.1rem;
-          font-weight: 700;
-          color: #1e293b;
-          margin-bottom: 1rem;
-        }
-
-        .specs-table {
-          width: 100%;
-          border-collapse: collapse;
-        }
-
+        .bottom-grid { display: grid; grid-template-columns: 1fr 280px; gap: 1.5rem; }
+        .specs-card { background: #ffffff; border: 1px solid #e5e7eb; border-radius: 14px; padding: 1.5rem; }
+        .specs-heading { font-size: 1.1rem; font-weight: 700; color: #1e293b; margin-bottom: 1rem; }
+        .specs-table { width: 100%; border-collapse: collapse; }
         .spec-row:nth-child(even) { background: #f8fafc; }
-
-        .spec-key, .spec-val {
-          padding: 0.65rem 0.75rem;
-          font-size: 0.85rem;
-          border-bottom: 1px solid #f1f5f9;
-        }
-
-        .spec-key {
-          color: #64748b;
-          font-weight: 500;
-          width: 40%;
-        }
-
-        .spec-val {
-          color: #374151;
-          font-weight: 600;
-        }
-
-        .need-help-card {
-          background: #ffffff;
-          border: 1px solid #e5e7eb;
-          border-radius: 14px;
-          padding: 1.5rem;
-          display: flex;
-          flex-direction: column;
-          gap: 0.75rem;
-        }
-
-        .help-heading {
-          font-size: 1rem;
-          font-weight: 700;
-          color: #1e293b;
-        }
-
-        .help-sub {
-          font-size: 0.83rem;
-          color: #64748b;
-          margin-top: -0.4rem;
-        }
-
-        .help-contact {
-          display: flex;
-          align-items: center;
-          gap: 0.6rem;
-          text-decoration: none;
-          font-size: 0.875rem;
-          color: #374151;
-          font-weight: 500;
-          padding: 0.5rem 0;
-          border-top: 1px solid #f1f5f9;
-        }
-
+        .spec-key, .spec-val { padding: 0.65rem 0.75rem; font-size: 0.85rem; border-bottom: 1px solid #f1f5f9; }
+        .spec-key { color: #64748b; font-weight: 500; width: 40%; }
+        .spec-val { color: #374151; font-weight: 600; }
+        .need-help-card { background: #ffffff; border: 1px solid #e5e7eb; border-radius: 14px; padding: 1.5rem; display: flex; flex-direction: column; gap: 0.75rem; }
+        .help-heading { font-size: 1rem; font-weight: 700; color: #1e293b; margin: 0; }
+        .help-sub { font-size: 0.83rem; color: #64748b; margin: -0.4rem 0 0; }
+        .help-contact { display: flex; align-items: center; gap: 0.6rem; text-decoration: none; font-size: 0.875rem; color: #374151; font-weight: 500; padding: 0.5rem 0; border-top: 1px solid #f1f5f9; }
         .help-contact:hover { color: #16a34a; }
-
-        @media (max-width: 900px) {
-          .detail-grid { grid-template-columns: 1fr; }
-          .bottom-grid { grid-template-columns: 1fr; }
-        }
-
-        @media (max-width: 600px) {
-          .detail-page { padding: 1rem; }
-          .gallery { flex-direction: column; }
-          .thumbnail-col { flex-direction: row; }
-          .detail-ctas { flex-direction: column; }
-        }
+        @media (max-width: 900px) { .detail-grid { grid-template-columns: 1fr; } .bottom-grid { grid-template-columns: 1fr; } }
+        @media (max-width: 600px) { .detail-page { padding: 1rem; } .gallery { flex-direction: column; } .thumbnail-col { flex-direction: row; } .detail-ctas { flex-direction: column; } }
       `}</style>
     </div>
   );
+}
+
+// ── Normalizers ──────────────────────────────────────────────────────────────
+
+function normalizeManual(p) {
+  const variants = Array.isArray(p.variants) ? p.variants : [];
+  const prices = variants.map(v => v.price).filter(Boolean);
+  const minPrice = prices.length ? Math.min(...prices) : 0;
+
+  let imageUrls = [];
+  try {
+    const v = p.image_urls?.value;
+    const parsed = typeof v === 'string' ? JSON.parse(v) : v;
+    imageUrls = Array.isArray(parsed) ? parsed : [];
+  } catch (_) {}
+
+  let specsObj = {};
+  try {
+    const sv = p.specs?.value || p.specifications?.value;
+    specsObj = typeof sv === 'string' ? JSON.parse(sv) : (sv || {});
+  } catch (_) {}
+
+  return {
+    id: p.id,
+    name: p.title || p.name,
+    brand: p.brand || '',
+    category: p.category_id || p.category || '',
+    price: minPrice,
+    image: imageUrls[0] || '',
+    images: imageUrls,
+    specs: specsObj,
+    features: [],
+    description: p.detailed_description || p.shortDescription || '',
+    isScraped: false,
+  };
+}
+
+function normalizeScraped(p) {
+  return {
+    id: 's-' + p.id,
+    name: p.name,
+    brand: p.brand || '—',
+    category: p.category || 'Books',
+    price: p.price ? parseFloat(p.price) : 0,
+    image: p.imageUrl || '',
+    images: p.imageUrl ? [p.imageUrl] : [],
+    specs: {},
+    features: [],
+    description: p.description || '',
+    rating: p.rating,
+    stock: p.stock,
+    sourceUrl: p.sourceUrl,
+    sourceName: p.sourceName,
+    isScraped: true,
+  };
 }

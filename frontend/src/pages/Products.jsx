@@ -1,6 +1,7 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Link, useSearchParams, useNavigate } from 'react-router-dom';
-import { mockProducts } from '../data/mockData';
+
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8089';
 
 const CATEGORIES = [
   { name: 'Laptops', count: 12 },
@@ -71,16 +72,75 @@ export default function Products() {
     initCat ? [initCat.charAt(0).toUpperCase() + initCat.slice(1)] : []
   );
   const [selectedBrands, setSelectedBrands] = useState([]);
-  const [priceFromVal, setPriceFromVal] = useState(20000);
+  const [priceFromVal, setPriceFromVal] = useState(0);
   const [priceToVal, setPriceToVal] = useState(200000);
   const [sortBy, setSortBy] = useState('Latest');
   const [wishlist, setWishlist] = useState([]);
   const [showAllCats, setShowAllCats] = useState(false);
   const [showAllBrands, setShowAllBrands] = useState(false);
   const [brandSearch, setBrandSearch] = useState('');
-  const [appliedFilters, setAppliedFilters] = useState({ categories: [], brands: [], priceFrom: 20000, priceTo: 200000 });
+  const [appliedFilters, setAppliedFilters] = useState({ categories: [], brands: [], priceFrom: 0, priceTo: 200000 });
   const [showMobileFilter, setShowMobileFilter] = useState(false);
   const [mobileSearch, setMobileSearch] = useState(initQ);
+  const [allProducts, setAllProducts] = useState([]);
+
+  useEffect(() => {
+    const fetchManual = fetch(`${API_BASE}/base/getProducts`)
+      .then(r => r.json())
+      .then(data => {
+        const raw = data?.data || data || [];
+        return (Array.isArray(raw) ? raw : []).map(p => {
+          const variants = Array.isArray(p.variants) ? p.variants : [];
+          const prices = variants.map(v => v.price).filter(Boolean);
+          const minPrice = prices.length ? Math.min(...prices) : 0;
+          let imageUrl = '';
+          try {
+            const imgVal = p.image_urls?.value;
+            const imgs = typeof imgVal === 'string' ? JSON.parse(imgVal) : imgVal;
+            imageUrl = Array.isArray(imgs) ? imgs[0] : '';
+          } catch (_) {}
+          let specsObj = {};
+          try {
+            const sv = p.specs?.value || p.specifications?.value;
+            specsObj = typeof sv === 'string' ? JSON.parse(sv) : (sv || {});
+          } catch (_) {}
+          return {
+            ...p,
+            name: p.title || p.name,
+            price: minPrice,
+            image: imageUrl,
+            specs: specsObj,
+            features: [],
+            isScraped: false,
+          };
+        });
+      })
+      .catch(() => []);
+
+    const fetchScraped = fetch(`${API_BASE}/api/products/scraped`)
+      .then(r => r.json())
+      .then(raw => (Array.isArray(raw) ? raw : []).map(p => ({
+        id: 's-' + p.id,
+        name: p.name,
+        brand: p.brand || '—',
+        category: p.category || 'Books',
+        price: p.price ? parseFloat(p.price) : 0,
+        image: p.imageUrl || '',
+        specs: {},
+        features: [],
+        shortDescription: p.description ? p.description.slice(0, 120) + '…' : '',
+        rating: p.rating,
+        stock: p.stock,
+        sourceUrl: p.sourceUrl,
+        sourceName: p.sourceName,
+        isScraped: true,
+      })))
+      .catch(() => []);
+
+    Promise.all([fetchManual, fetchScraped]).then(([manual, scraped]) => {
+      setAllProducts([...manual, ...scraped]);
+    });
+  }, []);
 
   const toggleCategory = cat => setSelectedCategories(p => p.includes(cat) ? p.filter(c => c !== cat) : [...p, cat]);
   const toggleBrand = brand => setSelectedBrands(p => p.includes(brand) ? p.filter(b => b !== brand) : [...p, brand]);
@@ -94,7 +154,7 @@ export default function Products() {
   const clearFilters = () => {
     setSelectedCategories([]);
     setSelectedBrands([]);
-    setPriceFromVal(20000);
+    setPriceFromVal(0);
     setPriceToVal(200000);
     setAppliedFilters({ categories: [], brands: [], priceFrom: 20000, priceTo: 200000 });
   };
@@ -105,7 +165,7 @@ export default function Products() {
   };
 
   const filtered = useMemo(() => {
-    let list = [...mockProducts];
+    let list = [...allProducts];
     if (initQ) list = list.filter(p => p.name.toLowerCase().includes(initQ.toLowerCase()) || p.brand.toLowerCase().includes(initQ.toLowerCase()));
     if (appliedFilters.categories.length) list = list.filter(p => appliedFilters.categories.some(c => p.category.toLowerCase().includes(c.toLowerCase())));
     if (appliedFilters.brands.length) list = list.filter(p => appliedFilters.brands.includes(p.brand));
@@ -113,7 +173,7 @@ export default function Products() {
     if (sortBy === 'Price: Low to High') list.sort((a, b) => a.price - b.price);
     else if (sortBy === 'Price: High to Low') list.sort((a, b) => b.price - a.price);
     return list;
-  }, [appliedFilters, sortBy, initQ]);
+  }, [appliedFilters, sortBy, initQ, allProducts]);
 
   const visibleCats = showAllCats ? CATEGORIES : CATEGORIES.slice(0, 5);
   const filteredBrands = BRANDS.filter(b => b.name.toLowerCase().includes(brandSearch.toLowerCase()));
@@ -282,16 +342,30 @@ export default function Products() {
               return (
                 <div key={product.id} className="product-card">
                   <div className="product-img-wrap">
-                    <img src={product.image} alt={product.name} className="product-img" loading="lazy" />
+                    <img src={product.image} alt={product.name} className="product-img" loading="lazy"
+                      onError={e => { e.target.src = 'https://images.unsplash.com/photo-1496181133206-80ce9b88a853?auto=format&fit=crop&w=300&q=60'; }} />
                     <button className="wishlist-btn" onClick={() => toggleWishlist(product.id)}>
                       <HeartIcon filled={wishlist.includes(product.id)} />
                     </button>
+                    {product.isScraped && (
+                      <span style={{ position: 'absolute', bottom: '0.4rem', left: '0.4rem', background: 'rgba(59,130,246,0.9)', color: '#fff', fontSize: '0.65rem', fontWeight: 700, padding: '2px 7px', borderRadius: '4px' }}>
+                        {product.sourceName}
+                      </span>
+                    )}
                   </div>
                   <div className="product-info">
                     <h3 className="product-name">{product.name}</h3>
                     <span className="product-category">{product.category}</span>
-                    <span className="product-price">₹{product.price.toLocaleString('en-IN')} onwards</span>
-                    {specs.length > 0 && (
+                    {product.isScraped ? (
+                      <>
+                        <span className="product-price">£{product.price?.toFixed(2)}</span>
+                        {product.rating && <span style={{ fontSize: '0.73rem', color: '#64748b' }}>★ {product.rating}</span>}
+                        {product.stock && <span style={{ fontSize: '0.72rem', color: product.stock.toLowerCase().includes('in stock') ? '#16a34a' : '#ef4444', fontWeight: 600 }}>{product.stock}</span>}
+                      </>
+                    ) : (
+                      <span className="product-price">₹{product.price.toLocaleString('en-IN')} onwards</span>
+                    )}
+                    {!product.isScraped && specs.length > 0 && (
                       <div className="product-specs">
                         {specs.map((s, i) => (
                           <div key={i} className="spec-row">
@@ -303,7 +377,14 @@ export default function Products() {
                     )}
                     <div className="product-actions">
                       <Link to={`/products/${product.id}`} className="view-details-btn">View Details</Link>
-                      <Link to="/enquiry" className="request-quote-btn">Request Quote</Link>
+                      <Link
+                        to={product.isScraped
+                          ? `/enquiry?productName=${encodeURIComponent(product.name)}&productCategory=${encodeURIComponent(product.category)}`
+                          : '/enquiry'}
+                        className="request-quote-btn"
+                      >
+                        Request Quote
+                      </Link>
                     </div>
                   </div>
                 </div>

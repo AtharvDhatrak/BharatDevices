@@ -2,16 +2,25 @@ import React, { useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { mockProducts } from '../data/mockData';
 
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8089';
+
 const STEPS = ['Select Product', 'Fill Details', 'Submit Enquiry'];
 
 export default function Enquiry() {
   const [searchParams] = useSearchParams();
-  const initProductId = Number(searchParams.get('product')) || null;
+  const initProductId    = Number(searchParams.get('product')) || null;
+  const initProductName  = searchParams.get('productName') || '';
+  const initProductCat   = searchParams.get('productCategory') || '';
 
-  const [step, setStep] = useState(initProductId ? 2 : 1);
-  const [selectedProduct, setSelectedProduct] = useState(
-    initProductId ? mockProducts.find(p => p.id === initProductId) || mockProducts[0] : null
-  );
+  // Pre-selected product: from mockProducts by id, or from URL params for scraped products
+  const preSelected = initProductId
+    ? (mockProducts.find(p => p.id === initProductId) || mockProducts[0])
+    : initProductName
+      ? { id: 'external', name: initProductName, category: initProductCat, image: '', price: 0 }
+      : null;
+
+  const [step, setStep] = useState(preSelected ? 2 : 1);
+  const [selectedProduct, setSelectedProduct] = useState(preSelected);
   const [quantity, setQuantity] = useState(1);
   const [form, setForm] = useState({ name: '', company: '', email: '', phone: '', delivery: '', message: '' });
   const [submitting, setSubmitting] = useState(false);
@@ -22,8 +31,33 @@ export default function Enquiry() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSubmitting(true);
-    await new Promise(r => setTimeout(r, 900));
+
     const id = `BD-ENQ-${Date.now().toString().slice(-6)}`;
+
+    console.log('[Enquiry] Submitting to:', `${API_BASE}/api/enquiry/submit`);
+    try {
+      const res = await fetch(`${API_BASE}/api/enquiry/submit`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          enquiryId:       id,
+          name:            form.name,
+          company:         form.company,
+          email:           form.email,
+          phone:           form.phone,
+          delivery:        form.delivery,
+          message:         form.message || '',
+          productName:     selectedProduct?.name || 'N/A',
+          productCategory: selectedProduct?.category || 'N/A',
+          quantity:        quantity,
+        }),
+      });
+      const data = await res.json().catch(() => null);
+      console.log('[Enquiry] Response:', res.status, data);
+    } catch (err) {
+      console.error('[Enquiry] Network error:', err.message);
+    }
+
     setEnquiryId(id);
     setStep(3);
     setSubmitting(false);
