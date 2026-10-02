@@ -7,8 +7,13 @@ import { useTheme } from '../../components/ThemeContext';
 
 /* ─── Constants ─── */
 
+
 const STEPS = [
-  { id: 1, title: 'Product Information', desc: 'Add product details, specifications, pricing and media' },
+  { id: 1, title: 'Basic Info', desc: 'Add basic product details' },
+  { id: 2, title: 'Specs', desc: 'Add product specifications' },
+  { id: 3, title: 'Pricing', desc: 'Set pricing and stock details' },
+  { id: 4, title: 'Media', desc: 'Upload images via backend' },
+  { id: 5, title: 'SEO', desc: 'SEO and other settings' },
 ];
 
 /* ─── Main Component ─── */
@@ -46,9 +51,7 @@ export default function AdminAddProduct() {
   const [errorMessage, setErrorMessage] = useState('');
   const [uploading, setUploading] = useState(false);
   const [categoriesList, setCategoriesList] = useState([]);
-  const [brandsList, setBrandsList] = useState([]);
-  const [showPreview, setShowPreview] = useState(false);
-
+  const [brands, setBrands] = useState([]);
   /* Fetch sidebar nav items and categories using httpService */
   useEffect(() => {
     let mounted = true;
@@ -58,7 +61,7 @@ export default function AdminAddProduct() {
         const [menuRes, catRes, brandRes] = await Promise.allSettled([
           httpService.get('/base/menus', { params: { role } }),
           httpService.get('/base/getCategories').catch(() => httpService.get('/getCategories')),
-          httpService.get('/base/getBrands')
+          httpService.get('/base/getBrands').catch(() => httpService.get('/getBrands'))
         ]);
 
         if (mounted) {
@@ -77,8 +80,12 @@ export default function AdminAddProduct() {
             }
           }
           if (brandRes.status === 'fulfilled') {
-            const bData = brandRes.value?.data?.data || brandRes.value?.data || [];
-            if (Array.isArray(bData)) setBrandsList(bData);
+            const brandData = brandRes.value?.data?.data || brandRes.value?.data || [];
+            if (Array.isArray(brandData)) {
+              setBrands(brandData);
+            } else if (brandData && typeof brandData === 'object') {
+              setBrands(Object.values(brandData));
+            }
           }
         }
       } catch (err) {
@@ -148,7 +155,7 @@ export default function AdminAddProduct() {
         }));
       }
     }
-    return [{ id: 1, key: '', value: '', type: 'text', options: [], isVariant: false }];
+    return [{ key: 'Model', value: '', type: 'text', options: [], isVariant: false, id: 1 }];
   });
 
   const [variants, setVariants] = useState(() => productData?.variants || []);
@@ -351,6 +358,23 @@ export default function AdminAddProduct() {
     setBasic(b => ({ ...b, category: selectedCategoryName }));
     if (errorMessage && selectedCategoryName) setErrorMessage('');
     
+    const foundCat = categoriesList.find(c => {
+      const cName = (typeof c === 'string' ? c : (c.name || c.categoryName || c.id || '')).toLowerCase();
+      return cName === selectedCategoryName.toLowerCase();
+    });
+
+    if (foundCat && typeof foundCat === 'object' && Array.isArray(foundCat.specDefinitions) && !isEdit) {
+      const dynamicSpecs = foundCat.specDefinitions.map((def, idx) => ({
+        id: idx + 1,
+        key: def.label || def.key,
+        type: def.type || 'text',
+        options: def.options || [],
+        isVariant: def.isVariant || false,
+        isRequired: def.isRequired || false,
+        value: def.type === 'multiselect' || def.type === 'checkbox_group' ? [] : ''
+      }));
+      setSpecs(dynamicSpecs.length > 0 ? dynamicSpecs : [{ key: 'Model', value: '', type: 'text', options: [], isVariant: false, id: 1 }]);
+    }
   };
 
   useEffect(() => {
@@ -426,12 +450,17 @@ export default function AdminAddProduct() {
 
   const changeStep = (newStep) => {
     if (step === 1 && newStep > step && !validateStep1()) return;
+    if (step === 2 && newStep > step) {
+      if (!validateStep2()) return;
+      generateVariantMatrix();
+    }
+    if (step === 3 && newStep > step && !validateStep3()) return;
     if (newStep < 1 || newStep > STEPS.length) return;
     setStep(newStep);
   };
 
   const handleSave = async (asDraft = false) => {
-    if (!validateStep1() || !validateStep2() || !validateStep3()) return; // validateStep3 checks pricing
+    if (!validateStep1() || !validateStep2() || !validateStep3()) return;
     try {
       const productPayload = { ...buildProduct(), status: asDraft ? 'Draft' : quickInfo.status };
       await httpService.post('/base/saveProduct', productPayload);
@@ -444,38 +473,71 @@ export default function AdminAddProduct() {
     }
   };
 
-  /* Styles */
+  /* Styles matching requested theme (Warm Orange theme highlights, crisp clean cards, rounded inputs) */
+  const primaryThemeColor = '#f97316'; // Orange accent theme
   const styles = {
-    shell: { display: 'flex', height: '100vh', maxHeight: '100vh', minHeight: '100vh', overflow: 'hidden', backgroundColor: isDarkMode ? '#0b1329' : '#f8fafc', color: isDarkMode ? '#f1f5f9' : '#0f172a' },
+    shell: { display: 'flex', height: '100vh', maxHeight: '100vh', minHeight: '100vh', overflow: 'hidden', backgroundColor: isDarkMode ? '#0f172a' : '#f8fafc', color: isDarkMode ? '#f1f5f9' : '#1e293b' },
     main: { flex: 1, display: 'flex', flexDirection: 'column', height: '100%', minWidth: 0, width: '100%' },
-    content: { flex: 1, minHeight: 0, overflowY: 'auto', overflowX: 'hidden', padding: '0.75rem', maxWidth: '1280px', width: '100%', margin: '0 auto', boxSizing: 'border-box' },
-    card: { backgroundColor: isDarkMode ? '#131f37' : '#ffffff', border: `1px solid ${isDarkMode ? '#1e293b' : '#e2e8f0'}`, borderRadius: '12px', padding: '1.25rem', marginBottom: '1rem' },
-    grid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1rem', marginBottom: '1rem' },
-    input: { width: '100%', minHeight: '40px', padding: '0.5rem 0.75rem', borderRadius: '8px', border: `1px solid ${isDarkMode ? '#334155' : '#cbd5e1'}`, backgroundColor: isDarkMode ? '#0f172a' : '#ffffff', color: isDarkMode ? '#f8fafc' : '#0f172a', outline: 'none', fontSize: '0.9rem', boxSizing: 'border-box' },
-    label: { display: 'block', fontSize: '0.875rem', fontWeight: 600, marginBottom: '0.35rem', color: isDarkMode ? '#cbd5e1' : '#334155' },
+    content: { flex: 1, minHeight: 0, overflowY: 'auto', overflowX: 'hidden', padding: '1.5rem', maxWidth: '1320px', width: '100%', margin: '0 auto', boxSizing: 'border-box' },
+    card: { backgroundColor: isDarkMode ? '#1e293b' : '#ffffff', border: `1px solid ${isDarkMode ? '#334155' : '#e2e8f0'}`, borderRadius: '16px', padding: '1.75rem', marginBottom: '1.25rem', boxShadow: '0 4px 20px -2px rgba(0, 0, 0, 0.04)' },
+    grid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.25rem', marginBottom: '1.25rem' },
+    input: { width: '100%', minHeight: '44px', padding: '0.6rem 0.9rem', borderRadius: '10px', border: `1.5px solid ${isDarkMode ? '#475569' : '#cbd5e1'}`, backgroundColor: isDarkMode ? '#0f172a' : '#ffffff', color: isDarkMode ? '#f8fafc' : '#0f172a', outline: 'none', fontSize: '0.925rem', boxSizing: 'border-box', transition: 'border-color 0.2s' },
+    label: { display: 'block', fontSize: '0.875rem', fontWeight: 600, marginBottom: '0.4rem', color: isDarkMode ? '#e2e8f0' : '#334155' },
     required: { color: '#ef4444', marginLeft: '0.2rem' },
-    subText: { color: isDarkMode ? '#94a3b8' : '#64748b', fontSize: '0.775rem', marginTop: '0.25rem' },
-    errorAlert: { backgroundColor: '#fef2f2', border: '1px solid #fecaca', color: '#dc2626', padding: '0.75rem 1rem', borderRadius: '8px', marginBottom: '1rem', fontSize: '0.875rem', fontWeight: 500 },
-    actions: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '1.5rem', paddingTop: '1rem', borderTop: `1px solid ${isDarkMode ? '#1e293b' : '#e2e8f0'}` },
-    uploadBox: { border: `2px dashed ${isDarkMode ? '#334155' : '#cbd5e1'}`, borderRadius: '8px', padding: '1.25rem', textAlign: 'center', cursor: 'pointer', backgroundColor: isDarkMode ? '#0f172a' : '#f8fafc' }
+    subText: { color: isDarkMode ? '#94a3b8' : '#64748b', fontSize: '0.8rem', marginTop: '0.25rem' },
+    errorAlert: { backgroundColor: isDarkMode ? 'rgba(239, 68, 68, 0.15)' : '#fef2f2', border: '1px solid #fecaca', color: '#dc2626', padding: '0.85rem 1.15rem', borderRadius: '10px', marginBottom: '1.25rem', fontSize: '0.9rem', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '8px' },
+    actions: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '2rem', paddingTop: '1.25rem', borderTop: `1px solid ${isDarkMode ? '#334155' : '#e2e8f0'}` },
+    uploadBox: { border: `2px dashed ${isDarkMode ? '#475569' : '#cbd5e1'}`, borderRadius: '12px', padding: '1.5rem', textAlign: 'center', cursor: 'pointer', backgroundColor: isDarkMode ? '#0f172a' : '#f8fafc', transition: 'background-color 0.2s' }
   };
 
   const renderSpecValueInput = (item, index) => {
-    const displayValue = typeof item.value === 'string' ? item.value : Array.isArray(item.value) ? item.value.join(', ') : '';
-    return <input style={styles.input} placeholder="" value={displayValue} onChange={e => { const copy = [...specs]; copy[index].value = e.target.value; setSpecs(copy); }} />;
+    switch (item.type) {
+      case 'select':
+        return (
+          <select style={styles.input} value={item.value || ''} onChange={e => { const copy = [...specs]; copy[index].value = e.target.value; setSpecs(copy); }}>
+            <option value="">Select option</option>
+            {item.options.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+          </select>
+        );
+      case 'multiselect':
+      case 'checkbox_group':
+        return (
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', alignItems: 'center', minHeight: '44px', padding: '0.4rem 0.6rem', border: `1.5px solid ${isDarkMode ? '#475569' : '#cbd5e1'}`, borderRadius: '10px', background: isDarkMode ? '#0f172a' : '#fff' }}>
+            {item.options.map(opt => {
+              const selectedValues = Array.isArray(item.value) ? item.value : [];
+              const isChecked = selectedValues.includes(opt);
+              return (
+                <label key={opt} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.825rem', marginRight: '0.5rem', cursor: 'pointer', fontWeight: 500 }}>
+                  <input type="checkbox" checked={isChecked} onChange={e => {
+                    const copy = [...specs];
+                    let currentVals = Array.isArray(copy[index].value) ? [...copy[index].value] : [];
+                    if (e.target.checked) currentVals.push(opt);
+                    else currentVals = currentVals.filter(v => v !== opt);
+                    copy[index].value = currentVals;
+                    setSpecs(copy);
+                  }} />
+                  {opt}
+                </label>
+              );
+            })}
+          </div>
+        );
+      default:
+        return <input style={styles.input} placeholder="Value options" value={typeof item.value === 'string' ? item.value : Array.isArray(item.value) ? item.value.join(', ') : JSON.stringify(item.value || '')} onChange={e => { const copy = [...specs]; copy[index].value = e.target.value; setSpecs(copy); }} />;
+    }
   };
 
   return (
     <div style={styles.shell}>
       {uploading && (
-        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', zIndex: 9999 }}>
-          <div style={{ width: '50px', height: '50px', border: '5px solid #f3f3f3', borderTop: '5px solid #F97316', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
-          <p style={{ color: '#ffffff', marginTop: '12px', fontWeight: 600, fontSize: '0.95rem' }}>Uploading files...</p>
+        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', zIndex: 9999 }}>
+          <div style={{ width: '50px', height: '50px', border: `4px solid ${isDarkMode ? '#334155' : '#e2e8f0'}`, borderTop: `4px solid ${primaryThemeColor}`, borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
+          <p style={{ color: '#ffffff', marginTop: '16px', fontWeight: 600, fontSize: '1rem' }}>Uploading files...</p>
         </div>
       )}
 
       {toastMessage && (
-        <div style={{ position: 'fixed', top: '24px', right: '24px', zIndex: 10000, backgroundColor: '#10b981', color: '#ffffff', padding: '0.85rem 1.25rem', borderRadius: '8px', boxShadow: '0 4px 15px rgba(0,0,0,0.2)', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <div style={{ position: 'fixed', top: '24px', right: '24px', zIndex: 10000, backgroundColor: '#10b981', color: '#ffffff', padding: '0.9rem 1.35rem', borderRadius: '12px', boxShadow: '0 10px 25px -5px rgba(16, 185, 129, 0.4)', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '10px', fontSize: '0.95rem' }}>
           <span>✨</span> {toastMessage.text}
         </div>
       )}
@@ -483,19 +545,20 @@ export default function AdminAddProduct() {
       <style>{`
         .no-scrollbar::-webkit-scrollbar { display: none; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        .stepper-container { display: flex; align-items: center; justify-content: space-between; width: 100%; overflow-x: auto; padding: 0.25rem 0; gap: 0.5rem; }
-        .step-item { display: flex; flex-direction: column; align-items: center; flex: 1; position: relative; min-width: 60px; cursor: pointer; }
-        .step-line { position: absolute; top: 17px; left: -50%; right: 50%; height: 2px; background-color: ${isDarkMode ? '#1e293b' : '#e2e8f0'}; z-index: 1; }
-        .step-line.active { background-color: #F97316; }
-        .step-circle { width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 0.85rem; z-index: 2; border: 2px solid ${isDarkMode ? '#334155' : '#cbd5e1'}; background-color: ${isDarkMode ? '#0f172a' : '#ffffff'}; color: ${isDarkMode ? '#94a3b8' : '#64748b'}; }
-        .step-circle.active { background-color: #F97316; border-color: #F97316; color: #ffffff; }
+        .stepper-container { display: flex; align-items: center; justify-content: space-between; width: 100%; overflow-x: auto; padding: 0.5rem 0; gap: 1rem; }
+        .step-item { display: flex; flex-direction: column; align-items: center; flex: 1; position: relative; min-width: 80px; cursor: pointer; }
+        .step-line { position: absolute; top: 19px; left: -50%; right: 50%; height: 3px; background-color: ${isDarkMode ? '#334155' : '#e2e8f0'}; z-index: 1; transition: background-color 0.3s; }
+        .step-line.active { background-color: ${primaryThemeColor}; }
+        .step-circle { width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.9rem; z-index: 2; border: 2.5px solid ${isDarkMode ? '#475569' : '#cbd5e1'}; background-color: ${isDarkMode ? '#1e293b' : '#ffffff'}; color: ${isDarkMode ? '#94a3b8' : '#64748b'}; transition: all 0.2s; }
+        .step-circle.active { background-color: ${primaryThemeColor}; border-color: ${primaryThemeColor}; color: #ffffff; box-shadow: 0 0 0 4px rgba(249, 115, 22, 0.2); }
         .step-circle.completed { background-color: #10b981; border-color: #10b981; color: #ffffff; }
-        .step-title { font-size: 0.75rem; font-weight: 600; margin-top: 0.35rem; text-align: center; color: ${isDarkMode ? '#cbd5e1' : '#334155'}; white-space: nowrap; }
-        .step-desc { font-size: 0.7rem; color: ${isDarkMode ? '#64748b' : '#94a3b8'}; text-align: center; margin-top: 0.1rem; }
-        .matrix-table { width: 100%; border-collapse: collapse; margin-top: 0.5rem; font-size: 0.875rem; }
-        .matrix-table th, .matrix-table td { padding: 0.65rem; border-bottom: 1px solid ${isDarkMode ? '#1e293b' : '#e2e8f0'}; text-align: left; }
-        .matrix-table th { font-weight: 600; color: ${isDarkMode ? '#94a3b8' : '#64748b'}; background-color: ${isDarkMode ? '#0f172a' : '#f8fafc'}; }
-        .thumb-preview { width: 60px; height: 60px; object-fit: cover; border-radius: 6px; border: 1px solid ${isDarkMode ? '#334155' : '#cbd5e1'}; }
+        .step-title { font-size: 0.8rem; font-weight: 700; margin-top: 0.5rem; text-align: center; color: ${isDarkMode ? '#e2e8f0' : '#334155'}; white-space: nowrap; }
+        .step-desc { font-size: 0.725rem; color: ${isDarkMode ? '#94a3b8' : '#64748b'}; text-align: center; margin-top: 0.15rem; }
+        .matrix-table { width: 100%; border-collapse: separate; border-spacing: 0; margin-top: 0.75rem; font-size: 0.9rem; }
+        .matrix-table th, .matrix-table td { padding: 0.85rem; border-bottom: 1px solid ${isDarkMode ? '#334155' : '#e2e8f0'}; text-align: left; }
+        .matrix-table th { font-weight: 700; color: ${isDarkMode ? '#cbd5e1' : '#475569'}; background-color: ${isDarkMode ? '#0f172a' : '#f8fafc'}; }
+        .matrix-table tr:last-child td { border-bottom: none; }
+        .thumb-preview { width: 68px; height: 68px; object-fit: cover; border-radius: 10px; border: 1.5px solid ${isDarkMode ? '#475569' : '#cbd5e1'}; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
       `}</style>
 
       <Sidebar navItems={navItems} loading={navLoading} activePath={location.pathname} onNavigate={(path) => { if (path) navigate(path); }} />
@@ -504,18 +567,20 @@ export default function AdminAddProduct() {
         <AdminTopbar user={{ name: localStorage.getItem('userName') || 'Admin User', avatar: null }} notificationCount={6} messageCount={2} onSearch={() => {}} onLogout={() => { localStorage.clear(); navigate('/login'); }} />
 
         <div style={styles.content} className="no-scrollbar">
-          <div style={{ marginBottom: '1rem' }}>
-            <nav style={{ fontSize: '0.8rem', marginBottom: '0.25rem' }}>
-              <Link to="/admin" style={{ color: isDarkMode ? '#FB923C' : '#F97316', textDecoration: 'none' }}>Dashboard</Link>
-              <span style={{ margin: '0 0.4rem', color: styles.subText.color }}>›</span>
-              <Link to="/admin/products" style={{ color: isDarkMode ? '#FB923C' : '#F97316', textDecoration: 'none' }}>Products</Link>
-              <span style={{ margin: '0 0.4rem', color: styles.subText.color }}>›</span>
-              <span style={{ color: styles.subText.color }}>{isEdit ? 'Edit' : 'Add'}</span>
-            </nav>
-            <h1 style={{ fontSize: '1.25rem', fontWeight: 700, margin: 0 }}>{isEdit ? 'Edit Product' : 'Add Product'}</h1>
+          <div style={{ marginBottom: '1.25rem', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+            <div>
+              <nav style={{ fontSize: '0.825rem', marginBottom: '0.35rem', fontWeight: 500 }}>
+                <Link to="/admin" style={{ color: primaryThemeColor, textDecoration: 'none' }}>Dashboard</Link>
+                <span style={{ margin: '0 0.4rem', color: styles.subText.color }}>›</span>
+                <Link to="/admin/products" style={{ color: primaryThemeColor, textDecoration: 'none' }}>Products</Link>
+                <span style={{ margin: '0 0.4rem', color: styles.subText.color }}>›</span>
+                <span style={{ color: styles.subText.color }}>{isEdit ? 'Edit Product' : 'Add Product'}</span>
+              </nav>
+              <h1 style={{ fontSize: '1.5rem', fontWeight: 800, margin: 0, letterSpacing: '-0.025em' }}>{isEdit ? 'Edit Product Catalog' : 'Add New Product'}</h1>
+            </div>
           </div>
 
-          {/* Stepper */}
+          {/* Stepper Card */}
           <div style={styles.card}>
             <div className="stepper-container no-scrollbar">
               {STEPS.map((s, idx) => {
@@ -527,7 +592,7 @@ export default function AdminAddProduct() {
                     <div className={`step-circle ${isActive ? 'active' : ''} ${isCompleted ? 'completed' : ''}`}>
                       {isCompleted ? '✓' : s.id}
                     </div>
-                    <span className="step-title" style={{ color: isActive ? (isDarkMode ? '#FB923C' : '#F97316') : undefined }}>{s.title}</span>
+                    <span className="step-title" style={{ color: isActive ? primaryThemeColor : undefined }}>{s.title}</span>
                     <span className="step-desc">{s.desc}</span>
                   </div>
                 );
@@ -541,7 +606,7 @@ export default function AdminAddProduct() {
             {/* Step 1: Basic Info */}
             {step === 1 && (
               <>
-                <h2 style={{ fontSize: '1rem', fontWeight: 600, marginBottom: '1rem' }}>Product Information</h2>
+                <h2 style={{ fontSize: '1.1rem', fontWeight: 700, marginBottom: '1.25rem', paddingBottom: '0.5rem', borderBottom: `1px solid ${isDarkMode ? '#334155' : '#f1f5f9'}` }}>Basic Information</h2>
                 <div style={styles.grid}>
                   <div>
                     <label style={styles.label}>Product Name <span style={styles.required}>*</span></label>
@@ -555,15 +620,29 @@ export default function AdminAddProduct() {
 
                 <div style={styles.grid}>
                   <div>
-                    <label style={styles.label}>Brand <span style={styles.required}>*</span></label>
-                    <select style={styles.input} value={basic.brand} onChange={e => { setBasic(b => ({ ...b, brand: e.target.value })); if (errorMessage) setErrorMessage(''); }}>
-                      <option value="">Select brand</option>
-                      {brandsList.map(b => {
-                        const name = typeof b === 'string' ? b : (b.name || '');
-                        return <option key={b.id || name} value={name}>{name}</option>;
-                      })}
-                    </select>
-                  </div>
+  <label style={styles.label}>Brand <span style={styles.required}>*</span></label>
+  <select 
+    style={styles.input} 
+    value={basic.brand} 
+    onChange={e => { 
+      setBasic(b => ({ ...b, brand: e.target.value })); 
+      if (errorMessage) setErrorMessage(''); 
+    }}
+  >
+    <option value="">Select brand</option>
+    {brands.map((b, index) => {
+      // Handles both object structures or fallback to plain string
+      const brandValue = typeof b === 'object' && b !== null ? (b.name || b.brandName || b.id) : b;
+      const brandKey = typeof b === 'object' && b !== null ? (b.id || b.name || index) : b;
+      
+      return (
+        <option key={brandKey} value={brandValue}>
+          {brandValue}
+        </option>
+      );
+    })}
+  </select>
+</div>
                   <div>
                     <label style={styles.label}>Model Number <span style={styles.required}>*</span></label>
                     <input style={styles.input} placeholder="Enter model number" value={basic.modelNumber} onChange={e => { setBasic(b => ({ ...b, modelNumber: e.target.value })); if (errorMessage) setErrorMessage(''); }} />
@@ -588,169 +667,222 @@ export default function AdminAddProduct() {
                   </div>
                 </div>
 
-                <div style={{ marginBottom: '1rem' }}>
+                <div style={{ marginBottom: '1.25rem' }}>
                   <label style={styles.label}>Short Description <span style={styles.required}>*</span></label>
                   <textarea rows={3} style={{ ...styles.input, resize: 'vertical' }} placeholder="Enter short description" maxLength={150} value={basic.shortDescription} onChange={e => { setBasic(b => ({ ...b, shortDescription: e.target.value })); if (errorMessage) setErrorMessage(''); }} />
                 </div>
 
-                <div style={{ marginBottom: '1rem' }}>
+                <div style={{ marginBottom: '1.25rem' }}>
                   <label style={styles.label}>Detailed Description</label>
                   <textarea rows={4} style={{ ...styles.input, resize: 'vertical' }} placeholder="Enter comprehensive product features..." value={basic.detailedDescription} onChange={e => setBasic(b => ({ ...b, detailedDescription: e.target.value }))} />
                 </div>
 
-                <div style={{ marginBottom: '1rem' }}>
+                <div style={{ marginBottom: '0.5rem' }}>
                   <label style={styles.label}>Tags</label>
                   <input style={styles.input} placeholder="e.g. gaming, lightweight (comma separated)" value={basic.tagsInput} onChange={e => setBasic(b => ({ ...b, tagsInput: e.target.value }))} />
                 </div>
+              </>
+            )}
 
-                {/* Specifications */}
-                <div style={{ marginTop: '1.5rem', borderTop: `1px solid ${isDarkMode ? '#1e293b' : '#e2e8f0'}`, paddingTop: '1.25rem' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                    <div>
-                      <h2 style={{ fontSize: '1rem', fontWeight: 600, margin: 0 }}>Specifications <span style={styles.required}>*</span></h2>
-                      <p style={{ ...styles.subText, margin: 0 }}>At least one specification is required.</p>
-                    </div>
-                    <button type="button" onClick={() => setSpecs(prev => [...prev, { id: Math.random(), key: '', value: '', type: 'text', options: [], isVariant: false }])} style={{ padding: '0.4rem 0.75rem', fontSize: '0.8rem', borderRadius: '6px', border: 'none', backgroundColor: '#F97316', color: '#fff', cursor: 'pointer' }}>
-                      + Add Field
-                    </button>
+            {/* Step 2: Specifications */}
+            {step === 2 && (
+              <>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', paddingBottom: '0.5rem', borderBottom: `1px solid ${isDarkMode ? '#334155' : '#f1f5f9'}` }}>
+                  <div>
+                    <h2 style={{ fontSize: '1.1rem', fontWeight: 700, margin: 0 }}>Specifications <span style={styles.required}>*</span></h2>
+                    <p style={{ ...styles.subText, margin: 0 }}>At least one specification is required.</p>
                   </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
-                    {specs.map((item, index) => (
-                      <div key={item.id} style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                        <input style={{ ...styles.input, flex: 1 }} placeholder="Enter Specification Name" value={item.key} onChange={e => { const copy = [...specs]; copy[index].key = e.target.value; setSpecs(copy); if (errorMessage) setErrorMessage(''); }} />
-                        <div style={{ flex: 1.5 }}>{renderSpecValueInput(item, index)}</div>
-                        <button type="button" onClick={() => setSpecs(specs.filter((_, i) => i !== index))} style={{ background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer', padding: '0.5rem', fontWeight: 'bold' }}>✕</button>
-                      </div>
-                    ))}
-                  </div>
+                  <button type="button" onClick={() => setSpecs(prev => [...prev, { id: Math.random(), key: '', value: '', type: 'text', options: [], isVariant: false }])} style={{ padding: '0.5rem 1rem', fontSize: '0.85rem', fontWeight: 600, borderRadius: '10px', border: 'none', backgroundColor: primaryThemeColor, color: '#fff', cursor: 'pointer', boxShadow: '0 2px 8px rgba(249, 115, 22, 0.3)' }}>
+                    + Add Field
+                  </button>
                 </div>
 
-                {/* Pricing */}
-                <div style={{ marginTop: '1.5rem', borderTop: `1px solid ${isDarkMode ? '#1e293b' : '#e2e8f0'}`, paddingTop: '1.25rem' }}>
-                  <h2 style={{ fontSize: '1rem', fontWeight: 600, marginBottom: '0.25rem' }}>Pricing <span style={styles.required}>*</span></h2>
-                  <div style={{ maxWidth: '400px', marginTop: '0.75rem' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+                  {specs.map((item, index) => (
+                    <div key={item.id} style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', backgroundColor: isDarkMode ? '#0f172a' : '#f8fafc', padding: '0.75rem', borderRadius: '12px', border: `1px solid ${isDarkMode ? '#334155' : '#e2e8f0'}` }}>
+                      <input style={{ ...styles.input, flex: 1 }} placeholder="Specification Name" value={item.key} onChange={e => { const copy = [...specs]; copy[index].key = e.target.value; setSpecs(copy); if (errorMessage) setErrorMessage(''); }} />
+                      
+                      <div style={{ flex: 1.5 }}>
+                        {renderSpecValueInput(item, index)}
+                      </div>
+
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.85rem', fontWeight: 600, padding: '0 0.5rem' }}>
+                        <input type="checkbox" style={{ width: '16px', height: '16px', accentColor: primaryThemeColor }} checked={item.isVariant} onChange={e => { const copy = [...specs]; copy[index].isVariant = e.target.checked; setSpecs(copy); }} />
+                        <span>Variant</span>
+                      </div>
+
+                      <button type="button" onClick={() => setSpecs(specs.filter((_, i) => i !== index))} style={{ background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer', padding: '0.5rem', fontWeight: 'bold', fontSize: '1.1rem' }}>✕</button>
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
+
+            {/* Step 3: Pricing & Inventory Matrix */}
+            {step === 3 && (
+              <>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', paddingBottom: '0.5rem', borderBottom: `1px solid ${isDarkMode ? '#334155' : '#f1f5f9'}` }}>
+                  <div>
+                    <h2 style={{ fontSize: '1.1rem', fontWeight: 700, margin: 0 }}>Pricing & Inventory Matrix <span style={styles.required}>*</span></h2>
+                    <p style={{ ...styles.subText, margin: 0 }}>Set pricing for variants or base configurations.</p>
+                  </div>
+                  <button type="button" onClick={generateVariantMatrix} style={{ padding: '0.45rem 0.85rem', fontSize: '0.8rem', fontWeight: 600, borderRadius: '8px', border: `1.5px solid ${isDarkMode ? '#475569' : '#cbd5e1'}`, background: 'transparent', color: isDarkMode ? '#f8fafc' : '#0f172a', cursor: 'pointer' }}>
+                    Regenerate Matrix
+                  </button>
+                </div>
+
+                {variants.length > 0 ? (
+                  <div style={{ overflowX: 'auto', borderRadius: '12px', border: `1px solid ${isDarkMode ? '#334155' : '#e2e8f0'}` }}>
+                    <table className="matrix-table">
+                      <thead>
+                        <tr>
+                          {(() => {
+                            const firstCombo = typeof variants[0].combination === 'string' ? JSON.parse(variants[0].combination) : variants[0].combination;
+                            return Object.keys(firstCombo || {}).map(k => <th key={k}>{k.toUpperCase()}</th>);
+                          })()}
+                          <th>Variant SKU</th>
+                          <th>Price ($) <span style={styles.required}>*</span></th>
+                          <th>Stock Qty</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {variants.map((v, vIndex) => {
+                          const comboObj = typeof v.combination === 'string' ? JSON.parse(v.combination) : v.combination;
+                          return (
+                            <tr key={v.id || vIndex}>
+                              {Object.entries(comboObj || {}).map(([k, val]) => (
+                                <td key={k}><strong style={{ color: primaryThemeColor }}>{val}</strong></td>
+                              ))}
+                              <td>
+                                <input style={{ ...styles.input, minHeight: '38px', padding: '0.4rem 0.75rem' }} value={v.sku || ''} onChange={e => {
+                                  const copy = [...variants];
+                                  copy[vIndex].sku = e.target.value;
+                                  setVariants(copy);
+                                }} />
+                              </td>
+                              <td>
+                                <input type="number" style={{ ...styles.input, minHeight: '38px', padding: '0.4rem 0.75rem' }} placeholder="0.00" value={v.price ?? v.wholesale_price ?? ''} onChange={e => {
+                                  const copy = [...variants];
+                                  copy[vIndex].price = e.target.value;
+                                  setVariants(copy);
+                                  if (errorMessage) setErrorMessage('');
+                                }} />
+                              </td>
+                              <td>
+                                <input type="number" style={{ ...styles.input, minHeight: '38px', padding: '0.4rem 0.75rem' }} placeholder="Qty" value={v.stock ?? v.stock_quantity ?? ''} onChange={e => {
+                                  const copy = [...variants];
+                                  copy[vIndex].stock = e.target.value;
+                                  setVariants(copy);
+                                }} />
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : (
+                  <div style={{ maxWidth: '420px', margin: '1.5rem auto', padding: '1.5rem', backgroundColor: isDarkMode ? '#0f172a' : '#f8fafc', borderRadius: '12px', border: `1px solid ${isDarkMode ? '#334155' : '#e2e8f0'}` }}>
                     <label style={styles.label}>Base Price ($) <span style={styles.required}>*</span></label>
                     <input type="number" style={styles.input} placeholder="0.00" value={pricing.price} onChange={e => { setPricing(p => ({ ...p, price: e.target.value })); if (errorMessage) setErrorMessage(''); }} />
+                    <p style={styles.subText}>No variant fields were checked in Step 2, so this flat price will apply.</p>
                   </div>
+                )}
+              </>
+            )}
+
+            {/* Step 4: Media & File Groups */}
+            {step === 4 && (
+              <>
+                <h2 style={{ fontSize: '1.1rem', fontWeight: 700, marginBottom: '0.25rem' }}>Media & File Groups</h2>
+                <p style={{ ...styles.subText, marginBottom: '1.5rem' }}>Upload files securely through your Spring Boot backend controller.</p>
+
+                <div style={{ marginBottom: '1.75rem', padding: '1.25rem', border: `1px solid ${isDarkMode ? '#334155' : '#e2e8f0'}`, borderRadius: '12px', backgroundColor: isDarkMode ? '#0f172a' : '#f8fafc' }}>
+                  <label style={styles.label}>General Product Images</label>
+                  <div style={styles.uploadBox} onClick={() => document.getElementById('general-file-input').click()}>
+                    <p style={{ margin: 0, fontWeight: 600, fontSize: '0.925rem', color: isDarkMode ? '#cbd5e1' : '#334155' }}>📁 Click to upload general images</p>
+                    <input id="general-file-input" type="file" multiple accept="image/*" style={{ display: 'none' }} onChange={e => handleFileSelection(e, 'general')} />
+                  </div>
+
+                  {media.generalImages.length > 0 && (
+                    <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', marginTop: '1rem' }}>
+                      {media.generalImages.map((url, imgIdx) => (
+                        <div key={imgIdx} style={{ position: 'relative' }}>
+                          <img src={url} alt="General product" className="thumb-preview" />
+                          <button type="button" onClick={() => {
+                            const updated = media.generalImages.filter((_, i) => i !== imgIdx);
+                            setMedia(m => ({ ...m, generalImages: updated }));
+                          }} style={{ position: 'absolute', top: -6, right: -6, background: '#ef4444', color: '#fff', border: 'none', borderRadius: '50%', width: '22px', height: '22px', fontSize: '11px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 4px rgba(0,0,0,0.2)' }}>✕</button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
 
-                {/* Media */}
-                <div style={{ marginTop: '1.5rem', borderTop: `1px solid ${isDarkMode ? '#1e293b' : '#e2e8f0'}`, paddingTop: '1.25rem' }}>
-                  <h2 style={{ fontSize: '1rem', fontWeight: 600, marginBottom: '0.75rem' }}>Media</h2>
-                  <div style={{ padding: '1rem', border: `1px solid ${isDarkMode ? '#334155' : '#cbd5e1'}`, borderRadius: '8px' }}>
-                    <label style={styles.label}>Product Images</label>
-                    <div style={styles.uploadBox} onClick={() => document.getElementById('general-file-input').click()}>
-                      <p style={{ margin: 0, fontWeight: 500 }}>📂 Click to upload images</p>
-                      <input id="general-file-input" type="file" multiple accept="image/*" style={{ display: 'none' }} onChange={e => handleFileSelection(e, 'general')} />
-                    </div>
-                    {media.generalImages.length > 0 && (
-                      <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginTop: '0.75rem' }}>
-                        {media.generalImages.map((url, imgIdx) => (
-                          <div key={imgIdx} style={{ position: 'relative' }}>
-                            <img src={url} alt="Product" className="thumb-preview" />
-                            <button type="button" onClick={() => setMedia(m => ({ ...m, generalImages: m.generalImages.filter((_, i) => i !== imgIdx) }))} style={{ position: 'absolute', top: -5, right: -5, background: '#ef4444', color: '#fff', border: 'none', borderRadius: '50%', width: '20px', height: '20px', fontSize: '10px', cursor: 'pointer' }}>✕</button>
+                {variants.length > 0 && (
+                  <div style={{ marginBottom: '1rem' }}>
+                    <h3 style={{ fontSize: '0.95rem', fontWeight: 700, marginBottom: '1rem' }}>Variant-Specific Images</h3>
+                    {variants.map(v => {
+                      const comboObj = typeof v.combination === 'string' ? JSON.parse(v.combination) : v.combination;
+                      const variantKey = Object.values(comboObj || {}).join('-');
+                      const groupImages = media.variantImages[variantKey] || v.imageUrls || [];
+                      return (
+                        <div key={v.id || variantKey} style={{ padding: '1rem', marginBottom: '0.85rem', border: `1.5px dashed ${isDarkMode ? '#475569' : '#cbd5e1'}`, borderRadius: '12px', backgroundColor: isDarkMode ? '#0f172a' : '#fafafa' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+                            <span style={{ fontSize: '0.9rem', fontWeight: 600 }}>Variant: <strong style={{ color: primaryThemeColor }}>{variantKey}</strong></span>
+                            <label style={{ padding: '0.35rem 0.75rem', background: primaryThemeColor, color: '#fff', fontSize: '0.8rem', fontWeight: 600, borderRadius: '8px', cursor: 'pointer', boxShadow: '0 2px 6px rgba(249, 115, 22, 0.25)' }}>
+                              Upload Images
+                              <input type="file" multiple accept="image/*" style={{ display: 'none' }} onChange={e => handleFileSelection(e, variantKey)} />
+                            </label>
                           </div>
-                        ))}
-                      </div>
-                    )}
+                          {groupImages.length > 0 && (
+                            <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                              {groupImages.map((u, uIdx) => (
+                                <img key={uIdx} src={u} alt="Variant thumbnail" className="thumb-preview" style={{ width: '52px', height: '52px' }} />
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
                   </div>
+                )}
+              </>
+            )}
+
+            {/* Step 5: SEO */}
+            {step === 5 && (
+              <>
+                <h2 style={{ fontSize: '1.1rem', fontWeight: 700, marginBottom: '1.25rem', paddingBottom: '0.5rem', borderBottom: `1px solid ${isDarkMode ? '#334155' : '#f1f5f9'}` }}>SEO Settings</h2>
+                <div>
+                  <label style={styles.label}>SEO Slug</label>
+                  <input style={styles.input} placeholder="product-slug" value={seo.slug} onChange={e => setSeo(s => ({ ...s, slug: e.target.value }))} />
                 </div>
               </>
             )}
 
             {/* Bottom Actions */}
             <div style={styles.actions}>
-              <div />
-              <div style={{ display: 'flex', gap: '0.75rem' }}>
-                <button type="button" onClick={() => setShowPreview(true)} style={{ padding: '0.6rem 1.25rem', borderRadius: '8px', border: `1px solid ${isDarkMode ? '#334155' : '#cbd5e1'}`, backgroundColor: 'transparent', color: isDarkMode ? '#f8fafc' : '#334155', cursor: 'pointer', fontWeight: 600 }}>
-                  Preview
-                </button>
-                <button type="button" onClick={() => handleSave(false)} style={{ padding: '0.6rem 1.25rem', borderRadius: '8px', border: 'none', backgroundColor: '#10b981', color: '#ffffff', cursor: 'pointer', fontWeight: 600 }}>
-                  {saved ? 'Saved!' : isEdit ? 'Update Product' : 'Save Product'}
-                </button>
+              <button type="button" onClick={() => { if (errorMessage) setErrorMessage(''); changeStep(step - 1); }} disabled={step === 1} style={{ padding: '0.65rem 1.25rem', borderRadius: '10px', border: `1.5px solid ${isDarkMode ? '#475569' : '#cbd5e1'}`, backgroundColor: 'transparent', color: isDarkMode ? '#f8fafc' : '#334155', fontWeight: 600, cursor: step === 1 ? 'not-allowed' : 'pointer', opacity: step === 1 ? 0.4 : 1 }}>
+                Previous
+              </button>
+
+              <div>
+                {step < STEPS.length ? (
+                  <button type="button" onClick={() => changeStep(step + 1)} style={{ padding: '0.65rem 1.5rem', borderRadius: '10px', border: 'none', backgroundColor: primaryThemeColor, color: '#ffffff', cursor: 'pointer', fontWeight: 700, boxShadow: '0 4px 12px rgba(249, 115, 22, 0.3)' }}>
+                    Next Step
+                  </button>
+                ) : (
+                  <button type="button" onClick={() => handleSave(false)} style={{ padding: '0.65rem 1.5rem', borderRadius: '10px', border: 'none', backgroundColor: '#10b981', color: '#ffffff', cursor: 'pointer', fontWeight: 700, boxShadow: '0 4px 12px rgba(16, 185, 129, 0.3)' }}>
+                    {saved ? 'Saved!' : isEdit ? 'Update Product' : 'Save Product'}
+                  </button>
+                )}
               </div>
             </div>
 
           </div>
         </div>
       </div>
-
-      {/* Preview Modal */}
-      {showPreview && (
-        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.6)', zIndex: 10000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
-          <div style={{ backgroundColor: isDarkMode ? '#131f37' : '#ffffff', borderRadius: '12px', width: '100%', maxWidth: '700px', maxHeight: '90vh', overflowY: 'auto', padding: '1.75rem', boxShadow: '0 20px 60px rgba(0,0,0,0.4)' }}>
-            {/* Header */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-              <h2 style={{ fontSize: '1.1rem', fontWeight: 700, margin: 0, color: isDarkMode ? '#f1f5f9' : '#0f172a' }}>Product Preview</h2>
-              <button type="button" onClick={() => setShowPreview(false)} style={{ background: 'transparent', border: 'none', fontSize: '1.25rem', cursor: 'pointer', color: isDarkMode ? '#94a3b8' : '#64748b' }}>✕</button>
-            </div>
-
-            {/* Product Images */}
-            {media.generalImages.length > 0 && (
-              <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '1.25rem' }}>
-                {media.generalImages.map((url, i) => (
-                  <img key={i} src={url} alt="Product" style={{ width: '80px', height: '80px', objectFit: 'cover', borderRadius: '8px', border: `1px solid ${isDarkMode ? '#334155' : '#e2e8f0'}` }} />
-                ))}
-              </div>
-            )}
-
-            {/* Basic Info */}
-            <div style={{ marginBottom: '1.25rem' }}>
-              <h3 style={{ fontSize: '1rem', fontWeight: 700, margin: '0 0 0.25rem', color: isDarkMode ? '#f1f5f9' : '#0f172a' }}>{basic.name || '—'}</h3>
-              <p style={{ fontSize: '0.8rem', color: isDarkMode ? '#94a3b8' : '#64748b', margin: 0 }}>{basic.brand} {basic.modelNumber && `· ${basic.modelNumber}`} {basic.category && `· ${basic.category}`}</p>
-            </div>
-
-            {basic.shortDescription && (
-              <div style={{ marginBottom: '1.25rem', padding: '0.75rem', backgroundColor: isDarkMode ? '#0f172a' : '#f8fafc', borderRadius: '8px', fontSize: '0.875rem', color: isDarkMode ? '#cbd5e1' : '#475569' }}>
-                {basic.shortDescription}
-              </div>
-            )}
-
-            {/* Price */}
-            {pricing.price && (
-              <div style={{ marginBottom: '1.25rem' }}>
-                <span style={{ fontSize: '1.25rem', fontWeight: 700, color: '#F97316' }}>₹{pricing.price}</span>
-              </div>
-            )}
-
-            {/* Specifications */}
-            {specs.filter(s => s.key.trim()).length > 0 && (
-              <div style={{ marginBottom: '1.25rem' }}>
-                <h4 style={{ fontSize: '0.875rem', fontWeight: 600, marginBottom: '0.5rem', color: isDarkMode ? '#cbd5e1' : '#334155' }}>Specifications</h4>
-                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
-                  <tbody>
-                    {specs.filter(s => s.key.trim()).map((s, i) => (
-                      <tr key={i} style={{ borderBottom: `1px solid ${isDarkMode ? '#1e293b' : '#e2e8f0'}` }}>
-                        <td style={{ padding: '0.5rem 0.75rem', fontWeight: 600, color: isDarkMode ? '#94a3b8' : '#64748b', width: '40%' }}>{s.key}</td>
-                        <td style={{ padding: '0.5rem 0.75rem', color: isDarkMode ? '#f1f5f9' : '#0f172a' }}>{Array.isArray(s.value) ? s.value.join(', ') : s.value || '—'}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-
-            {/* Tags */}
-            {basic.tagsInput && (
-              <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap', marginBottom: '1.25rem' }}>
-                {basic.tagsInput.split(',').map(t => t.trim()).filter(Boolean).map((tag, i) => (
-                  <span key={i} style={{ padding: '0.2rem 0.6rem', backgroundColor: isDarkMode ? '#0f172a' : '#f1f5f9', border: `1px solid ${isDarkMode ? '#334155' : '#e2e8f0'}`, borderRadius: '999px', fontSize: '0.75rem', color: isDarkMode ? '#94a3b8' : '#64748b' }}>{tag}</span>
-                ))}
-              </div>
-            )}
-
-            {/* Footer Buttons */}
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '1rem', paddingTop: '1rem', borderTop: `1px solid ${isDarkMode ? '#1e293b' : '#e2e8f0'}` }}>
-              <button type="button" onClick={() => setShowPreview(false)} style={{ padding: '0.6rem 1.25rem', borderRadius: '8px', border: `1px solid ${isDarkMode ? '#334155' : '#cbd5e1'}`, backgroundColor: 'transparent', color: isDarkMode ? '#f8fafc' : '#334155', cursor: 'pointer', fontWeight: 600 }}>
-                Edit
-              </button>
-              <button type="button" onClick={() => { setShowPreview(false); handleSave(false); }} style={{ padding: '0.6rem 1.25rem', borderRadius: '8px', border: 'none', backgroundColor: '#10b981', color: '#ffffff', cursor: 'pointer', fontWeight: 600 }}>
-                {isEdit ? 'Update Product' : 'Save Product'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
