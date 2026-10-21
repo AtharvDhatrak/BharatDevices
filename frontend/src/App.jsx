@@ -19,6 +19,7 @@ const Contact = lazy(() => import('./pages/Contact'));
 const AdminAddCategory = lazy(() => import('./pages/Admin/AdminAddCategories'));
 const AdminAllProducts = lazy(() => import('./pages/Admin/AdminProductsTable'));
 const AdminAddBrand = lazy(() => import('./pages/Admin/AdminAddBrand'));
+const AdminEnquiries = lazy(() => import('./pages/Admin/AdminEnquiries'));
 const Loader = () => (
   <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh', color: '#64748b' }}>
     Loading...
@@ -40,8 +41,9 @@ function Layout() {
           <Route path="/admin/add-category" element={<AdminAddCategory />} />
           <Route path="/admin/add-brand" element={<AdminAddBrand />} />
           <Route path="/admin/products/edit/:id" element={<AdminAddProduct />} />
+          <Route path="/admin/enquiries" element={<AdminEnquiries />} />
           <Route path="/admin" element={<AdminDashboard />} />
-<Route path="/admin/:tab/*" element={<AdminDashboard />} />
+          <Route path="/admin/:tab/*" element={<AdminDashboard />} />
         </Routes>
       </Suspense>
     );

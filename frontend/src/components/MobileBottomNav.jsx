@@ -72,11 +72,11 @@ export default function MobileBottomNav() {
           <span>Quote</span>
         </NavLink>
 
-        <NavLink to="/about" className={({ isActive }) => `bnav-item${isActive ? ' bnav-active' : ''}`}>
+        <NavLink to="/login?portal=admin" className={({ isActive }) => `bnav-item${isActive ? ' bnav-active' : ''}`} title="Admin Portal">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-            <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
           </svg>
-          <span>Menu</span>
+          <span>Admin</span>
         </NavLink>
       </nav>
 

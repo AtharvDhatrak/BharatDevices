@@ -102,8 +102,8 @@ const SidebarNavItem = ({
     if (onCloseMobile) onCloseMobile();
   };
 
-  const activeBg = isDark ? "#1e3a1e" : "#fff7ed";
-  const activeText = isDark ? "#ffffff" : "#EA580C";
+  const activeBg = isDark ? "rgba(249, 115, 22, 0.15)" : "#fff7ed";
+  const activeText = isDark ? "#fb923c" : "#EA580C";
   const inactiveText = isDark ? "#94a3b8" : "#475569";
   const activeIconColor = isDark ? "#FB923C" : "#F97316";
 
@@ -192,7 +192,7 @@ const SidebarNavItem = ({
                 top: "0.5rem",
                 bottom: "0.5rem",
                 width: "1px",
-                backgroundColor: isDark ? "#1e3a1e" : "#cbd5e1",
+                backgroundColor: isDark ? "#192b50" : "#cbd5e1",
               }}
             />
 
@@ -403,7 +403,7 @@ export default function Sidebar({ navItems = [], loading, activePath, onNavigate
               onClick={() => setIsMobileOpen(false)}
               aria-label="Close Navigation"
               style={{
-                background: isDarkMode ? "#1e3a1e" : "#f1f5f9",
+                background: isDarkMode ? "#132347" : "#f1f5f9",
                 border: "none",
                 color: isDarkMode ? "#94a3b8" : "#475569",
                 borderRadius: "6px",
@@ -422,7 +422,7 @@ export default function Sidebar({ navItems = [], loading, activePath, onNavigate
               type="button"
               onClick={toggleSidebar}
               style={{
-                background: isDarkMode ? "#1e3a1e" : "#f1f5f9",
+                background: isDarkMode ? "#132347" : "#f1f5f9",
                 border: "none",
                 color: isDarkMode ? "#94a3b8" : "#475569",
                 borderRadius: "6px",

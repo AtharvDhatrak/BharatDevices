@@ -41,9 +41,14 @@ public class EnquiryController {
             enquiry.setSubmittedAt(LocalDateTime.now());
             enquiryRepository.save(enquiry);
 
-            // Send email notification
-            emailService.sendEnquiryEmail(request);
-            log.info("Enquiry saved and email sent: {}", request.getEnquiryId());
+            // Send email notification (isolated so SMTP downtime/auth errors don't fail saving the enquiry)
+            try {
+                emailService.sendEnquiryEmail(request);
+                log.info("Enquiry saved and email sent: {}", request.getEnquiryId());
+            } catch (Exception mailEx) {
+                log.error("Enquiry saved to DB ({}) but email sending failed: {}", 
+                        request.getEnquiryId(), mailEx.getMessage());
+            }
 
             return ResponseEntity.ok(Map.of(
                 "success", true,

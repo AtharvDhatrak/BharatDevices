@@ -96,14 +96,21 @@ export default function Navbar() {
               {l.label}
             </NavLink>
           ))}
-          <div style={{ padding: '0.75rem 1.25rem 1rem' }}>
+          <div style={{ padding: '0.75rem 1.25rem 1rem', display: 'flex', flexDirection: 'column', gap: '8px' }}>
             <Link
               to="/enquiry"
               className="btn-request-quote"
-              style={{ display: 'inline-block' }}
+              style={{ display: 'block', textAlign: 'center' }}
               onClick={() => setMobileOpen(false)}
             >
               Request Quote
+            </Link>
+            <Link
+              to="/login?portal=admin"
+              className="mobile-admin-btn"
+              onClick={() => setMobileOpen(false)}
+            >
+              ⚡ Admin Portal Login
             </Link>
           </div>
         </nav>
@@ -246,7 +253,25 @@ export default function Navbar() {
         }
         .btn-request-quote:hover { background: #F97316; }
 
-        /* ── Hamburger ── */
+
+        .mobile-admin-btn {
+          border: 1px solid #fed7aa;
+          background: #fff7ed;
+          color: #c2410c;
+          padding: 0.6rem 1rem;
+          border-radius: 6px;
+          font-size: 0.85rem;
+          font-weight: 700;
+          text-align: center;
+          text-decoration: none;
+          display: block;
+          transition: all 0.2s;
+        }
+        .mobile-admin-btn:hover {
+          background: #ea580c;
+          color: #ffffff;
+        }
+
         .hamburger {
           display: none;
           background: none;

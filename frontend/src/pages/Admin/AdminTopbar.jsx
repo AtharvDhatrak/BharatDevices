@@ -4,8 +4,6 @@ import ThemeToggle from "../../components/ThemeToggle";
 
 export default function AdminTopbar({
   user = { name: "Admin User", avatar: null },
-  notificationCount = 5,
-  messageCount = 2,
   onSearch,
   onLogout
 }) {
@@ -59,8 +57,8 @@ export default function AdminTopbar({
   /* Dynamic style definitions */
   const headerStyle = {
     height: "60px",
-    backgroundColor: isDark ? "#0f172a" : "#ffffff",
-    borderBottom: `1px solid ${isDark ? "#1e293b" : "#e2e8f0"}`,
+    backgroundColor: isDark ? "#071328" : "#ffffff",
+    borderBottom: `1px solid ${isDark ? "#132a52" : "#e2e8f0"}`,
     padding: isMobile ? "0 12px 0 60px" : "0 20px", // Left padding offset on mobile for hamburger button
     display: "flex",
     alignItems: "center",
@@ -86,21 +84,6 @@ export default function AdminTopbar({
     color: isDark ? "#f8fafc" : "#1e293b",
     borderRadius: "8px",
     padding: 0,
-  };
-
-  const badgeStyle = {
-    position: "absolute",
-    top: "6px",
-    right: "6px",
-    backgroundColor: "#ef4444",
-    color: "#ffffff",
-    fontSize: "10px",
-    fontWeight: "bold",
-    borderRadius: "10px",
-    padding: "2px 5px",
-    minWidth: "14px",
-    textAlign: "center",
-    lineHeight: 1,
   };
 
   return (
@@ -226,25 +209,7 @@ export default function AdminTopbar({
               </button>
             )}
 
-            {/* Notification Button */}
-            <button type="button" style={actionBtnStyle} aria-label="Notifications">
-              🔔
-              {notificationCount > 0 && (
-                <span style={badgeStyle}>
-                  {notificationCount > 9 ? "9+" : notificationCount}
-                </span>
-              )}
-            </button>
 
-            {/* Messages Button */}
-            <button type="button" style={actionBtnStyle} aria-label="Messages">
-              💬
-              {messageCount > 0 && (
-                <span style={{ ...badgeStyle, backgroundColor: "#F97316" }}>
-                  {messageCount > 9 ? "9+" : messageCount}
-                </span>
-              )}
-            </button>
 
             {/* Theme Switcher Toggle */}
             <div style={{ display: "flex", alignItems: "center", padding: "0 4px" }}>

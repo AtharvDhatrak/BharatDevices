@@ -115,11 +115,12 @@ export default function AdminProductsTable() {
   });
 
   // Dynamic Theme Colors
-  const cardBg = isDarkMode ? "#1e293b" : "#ffffff";
+  const cardBg = isDarkMode ? "#0e1830" : "#ffffff";
   const textColor = isDarkMode ? "#f8fafc" : "#0f172a";
   const subTextColor = isDarkMode ? "#94a3b8" : "#64748b";
-  const borderColor = isDarkMode ? "#334155" : "#e2e8f0";
-  const modalBg = isDarkMode ? "#0f172a" : "#ffffff";
+  const borderColor = isDarkMode ? "#192b50" : "#e2e8f0";
+  const modalBg = isDarkMode ? "#0e1830" : "#ffffff";
+  const accentColor = isDarkMode ? "#fb923c" : "#ea580c";
 
   const styles = {
     shell: {
@@ -127,7 +128,7 @@ export default function AdminProductsTable() {
       height: "100vh",
       maxHeight: "100vh",
       overflow: "hidden",
-      backgroundColor: isDarkMode ? "#0b1329" : "#f8fafc",
+      backgroundColor: isDarkMode ? "#070d1e" : "#f8fafc",
       color: textColor,
     },
     main: {
@@ -155,7 +156,7 @@ export default function AdminProductsTable() {
     pageTitle: { fontSize: "24px", fontWeight: "bold", color: textColor, margin: 0 },
     pageSubtitle: { fontSize: "14px", color: subTextColor, margin: "4px 0 0 0" },
     addButton: {
-      backgroundColor: "#4f46e5",
+      backgroundColor: "#ea580c",
       color: "#ffffff",
       border: "none",
       padding: "10px 18px",
@@ -185,7 +186,7 @@ export default function AdminProductsTable() {
     },
     imageContainer: {
       height: "160px",
-      backgroundColor: isDarkMode ? "#0f172a" : "#f1f5f9",
+      backgroundColor: isDarkMode ? "#070d1e" : "#f1f5f9",
       display: "flex",
       alignItems: "center",
       justifyContent: "center",
@@ -196,8 +197,8 @@ export default function AdminProductsTable() {
       position: "absolute",
       top: "12px",
       right: "12px",
-      backgroundColor: isDarkMode ? "rgba(79, 70, 229, 0.2)" : "#eef2ff",
-      color: "#4f46e5",
+      backgroundColor: isDarkMode ? "rgba(249, 115, 22, 0.15)" : "#fff7ed",
+      color: "#ea580c",
       padding: "4px 10px",
       borderRadius: "20px",
       fontSize: "11px",
@@ -355,7 +356,7 @@ export default function AdminProductsTable() {
       borderRadius: "8px",
       objectFit: "cover",
       cursor: "pointer",
-      border: isActive ? "2px solid #4f46e5" : `1px solid ${borderColor}`,
+      border: isActive ? "2px solid #ea580c" : `1px solid ${borderColor}`,
       opacity: isActive ? 1 : 0.6,
       transition: "all 0.2s ease",
       flexShrink: 0,
@@ -406,7 +407,7 @@ export default function AdminProductsTable() {
       bottom: 0,
     },
     editModalButton: {
-      backgroundColor: "#4f46e5",
+      backgroundColor: "#ea580c",
       color: "#ffffff",
       border: "none",
       padding: "10px 20px",
@@ -432,8 +433,6 @@ export default function AdminProductsTable() {
       <div style={styles.main}>
         <AdminTopbar
           user={{ name: localStorage.getItem("userName") || "Admin User", avatar: null }}
-          notificationCount={6}
-          messageCount={2}
           onSearch={(query) => setSearchQuery(query)}
           onLogout={() => { localStorage.clear(); navigate("/login"); }}
         />
@@ -498,7 +497,7 @@ export default function AdminProductsTable() {
                               <Tag size={12} /> <strong>{product.brand || "Generic"}</strong>
                             </span>
                             {minPrice !== null && (
-                              <span style={{ fontSize: "13px", fontWeight: "bold", color: "#4f46e5" }}>
+                              <span style={{ fontSize: "13px", fontWeight: "bold", color: "#ea580c" }}>
                                 From ₹{minPrice}
                               </span>
                             )}
@@ -555,7 +554,7 @@ export default function AdminProductsTable() {
                   {/* Modal Header */}
                   <div style={styles.modalHeader}>
                     <div>
-                      <span style={{ fontSize: "12px", color: "#4f46e5", fontWeight: "bold", textTransform: "uppercase" }}>
+                      <span style={{ fontSize: "12px", color: "#ea580c", fontWeight: "bold", textTransform: "uppercase" }}>
                         {selectedProduct.category_id || "Product Details"}
                       </span>
                       <h2 style={{ fontSize: "20px", fontWeight: "bold", color: textColor, margin: "2px 0 0 0" }}>
@@ -676,7 +675,7 @@ export default function AdminProductsTable() {
                                         ))}
                                       </div>
                                     </td>
-                                    <td style={{ ...styles.tableRowTd, fontWeight: "bold", color: "#4f46e5" }}>
+                                    <td style={{ ...styles.tableRowTd, fontWeight: "bold", color: "#ea580c" }}>
                                       ₹{v.price != null ? Number(v.price).toFixed(2) : "0.00"}
                                     </td>
                                     <td style={styles.tableRowTd}>

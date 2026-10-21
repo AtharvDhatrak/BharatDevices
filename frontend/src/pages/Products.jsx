@@ -380,7 +380,7 @@ export default function Products() {
                       <Link
                         to={product.isScraped
                           ? `/enquiry?productName=${encodeURIComponent(product.name)}&productCategory=${encodeURIComponent(product.category)}`
-                          : '/enquiry'}
+                          : `/enquiry?product=${product.id}`}
                         className="request-quote-btn"
                       >
                         Request Quote

@@ -261,12 +261,18 @@ export default function AdminAddCategories() {
     }
   };
 
+  // Pagination for left list to prevent unconditional expansion
+  const ITEMS_PER_PAGE = 7;
+  const [currentPage, setCurrentPage] = useState(1);
+  const totalPages = Math.ceil(categories.length / ITEMS_PER_PAGE) || 1;
+  const paginatedCategories = categories.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
+
   // Dynamic Theme Colors
-  const cardBg = isDarkMode ? "#1e293b" : "#ffffff";
+  const cardBg = isDarkMode ? "#0e1830" : "#ffffff";
   const textColor = isDarkMode ? "#f8fafc" : "#0f172a";
   const subTextColor = isDarkMode ? "#94a3b8" : "#64748b";
-  const borderColor = isDarkMode ? "#334155" : "#e2e8f0";
-  const inputBg = isDarkMode ? "#0f172a" : "#ffffff";
+  const borderColor = isDarkMode ? "#192b50" : "#e2e8f0";
+  const inputBg = isDarkMode ? "#070d1e" : "#ffffff";
 
   const styles = {
     shell: {
@@ -274,7 +280,7 @@ export default function AdminAddCategories() {
       height: "100vh",
       maxHeight: "100vh",
       overflow: "hidden",
-      backgroundColor: isDarkMode ? "#0b1329" : "#f8fafc",
+      backgroundColor: isDarkMode ? "#070d1e" : "#f8fafc",
       color: textColor,
     },
     main: {
@@ -299,7 +305,7 @@ export default function AdminAddCategories() {
     },
     gridContainer: {
       display: "grid",
-      gridTemplateColumns: isMobile ? "1fr" : "minmax(240px, 280px) minmax(0, 1fr)",
+      gridTemplateColumns: isMobile ? "1fr" : "minmax(260px, 300px) minmax(0, 1fr)",
       gap: "20px",
       alignItems: "start",
       width: "100%",
@@ -324,8 +330,6 @@ export default function AdminAddCategories() {
             name: localStorage.getItem("userName") || "Admin User",
             avatar: null,
           }}
-          notificationCount={6}
-          messageCount={2}
           onSearch={(query) => console.log("Search:", query)}
           onLogout={() => {
             localStorage.clear();
@@ -348,7 +352,7 @@ export default function AdminAddCategories() {
               style={{
                 padding: "8px 16px",
                 borderRadius: "6px",
-                backgroundColor: isDarkMode ? "#334155" : "#e2e8f0",
+                backgroundColor: isDarkMode ? "#192b50" : "#e2e8f0",
                 color: textColor,
                 border: "none",
                 cursor: "pointer",
@@ -383,12 +387,17 @@ export default function AdminAddCategories() {
             
             {/* Left Column: Sidebar List of Categories */}
             <div style={{ backgroundColor: cardBg, padding: "16px", borderRadius: "10px", border: `1px solid ${borderColor}`, minWidth: 0 }}>
-              <h3 style={{ fontSize: "15px", fontWeight: "600", marginBottom: "12px" }}>Existing Categories</h3>
-              <div style={{ display: "flex", flexDirection: "column", gap: "6px", maxHeight: isMobile ? "200px" : "none", overflowY: isMobile ? "auto" : "visible" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
+                <h3 style={{ fontSize: "15px", fontWeight: "600", margin: 0 }}>Existing Categories</h3>
+                <span style={{ fontSize: "11px", fontWeight: "700", padding: "2px 8px", borderRadius: "10px", backgroundColor: isDarkMode ? "rgba(249, 115, 22, 0.15)" : "#fff7ed", color: "#f97316" }}>
+                  {categories.length} Total
+                </span>
+              </div>
+              <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
                 {categories.length === 0 ? (
                   <div style={{ fontSize: "13px", color: subTextColor, padding: "8px 0" }}>No categories found.</div>
                 ) : (
-                  categories.map((cat) => (
+                  paginatedCategories.map((cat) => (
                     <button
                       key={cat.id}
                       type="button"
@@ -407,6 +416,7 @@ export default function AdminAddCategories() {
                         justifyContent: "space-between",
                         alignItems: "center",
                         width: "100%",
+                        transition: "all 0.15s ease",
                       }}
                     >
                       <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{cat.name}</span>
@@ -417,6 +427,60 @@ export default function AdminAddCategories() {
                   ))
                 )}
               </div>
+
+              {/* Pagination controls when items cross container height */}
+              {totalPages > 1 && (
+                <div style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  marginTop: "14px",
+                  paddingTop: "10px",
+                  borderTop: `1px solid ${borderColor}`,
+                  fontSize: "12px",
+                  color: subTextColor
+                }}>
+                  <span>Page {currentPage} of {totalPages}</span>
+                  <div style={{ display: "flex", gap: "6px" }}>
+                    <button
+                      type="button"
+                      disabled={currentPage === 1}
+                      onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                      style={{
+                        padding: "4px 8px",
+                        borderRadius: "4px",
+                        border: `1px solid ${borderColor}`,
+                        background: "transparent",
+                        color: currentPage === 1 ? subTextColor : textColor,
+                        cursor: currentPage === 1 ? "not-allowed" : "pointer",
+                        fontSize: "11px",
+                        fontWeight: 600,
+                        opacity: currentPage === 1 ? 0.5 : 1
+                      }}
+                    >
+                      Prev
+                    </button>
+                    <button
+                      type="button"
+                      disabled={currentPage === totalPages}
+                      onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                      style={{
+                        padding: "4px 8px",
+                        borderRadius: "4px",
+                        border: `1px solid ${borderColor}`,
+                        background: "transparent",
+                        color: currentPage === totalPages ? subTextColor : textColor,
+                        cursor: currentPage === totalPages ? "not-allowed" : "pointer",
+                        fontSize: "11px",
+                        fontWeight: 600,
+                        opacity: currentPage === totalPages ? 0.5 : 1
+                      }}
+                    >
+                      Next
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Right Column: Schema Configuration Form */}
