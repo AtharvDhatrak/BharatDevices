@@ -333,7 +333,8 @@ export default function AdminAddCategories() {
           onSearch={(query) => console.log("Search:", query)}
           onLogout={() => {
             localStorage.clear();
-            navigate("/login");
+            sessionStorage.clear();
+            navigate("/", { replace: true });
           }}
         />
 

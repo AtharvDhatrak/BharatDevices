@@ -136,7 +136,7 @@ export default function AdminDashboard() {
         <AdminTopbar
           user={{ name: localStorage.getItem("userName") || "Admin User", avatar: null }}
           onSearch={(query) => {}}
-          onLogout={() => { localStorage.clear(); navigate("/login"); }}
+          onLogout={() => { localStorage.clear(); sessionStorage.clear(); navigate("/", { replace: true }); }}
         />
 
         {/* ─── CONTENT ─── */}

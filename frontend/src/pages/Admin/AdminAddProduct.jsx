@@ -986,7 +986,8 @@ export default function AdminAddProduct() {
           onSearch={() => {}}
           onLogout={() => {
             localStorage.clear();
-            navigate("/login");
+            sessionStorage.clear();
+            navigate("/", { replace: true });
           }}
         />
 

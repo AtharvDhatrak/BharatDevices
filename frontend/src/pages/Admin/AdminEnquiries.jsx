@@ -519,7 +519,7 @@ Website: https://bharatdevices.com`;
         <AdminTopbar
           user={{ name: localStorage.getItem('userName') || 'Admin User', avatar: null }}
           onSearch={(query) => setSearchQuery(query)}
-          onLogout={() => { localStorage.clear(); navigate('/login'); }}
+          onLogout={() => { localStorage.clear(); sessionStorage.clear(); navigate('/', { replace: true }); }}
         />
 
         {/* ─── CONTENT AREA ─── */}
@@ -1194,7 +1194,9 @@ Website: https://bharatdevices.com`;
                             }}>
                               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                 <span style={{ fontSize: '13px', fontWeight: 700, color: textColor }}>{it.name}</span>
-                                <span style={{ fontSize: '12px', fontWeight: 800, color: accentColor }}>₹{it.subtotal}</span>
+                                <span style={{ fontSize: '12px', fontWeight: 800, color: accentColor }}>
+                                  {it.subtotal ? `₹${it.subtotal}` : 'Quote Required'}
+                                </span>
                               </div>
                               <div style={{ fontSize: '11px', color: subTextColor, display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: '4px' }}>
                                 <span>Spec: <strong style={{ color: textColor }}>{it.spec}</strong></span>

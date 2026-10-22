@@ -71,6 +71,25 @@ export default function AdminAuthPage() {
 
       {/* Login Card */}
       <div className="al-card">
+        <button
+          type="button"
+          onClick={() => {
+            if (window.history.length > 1) {
+              navigate(-1);
+            } else {
+              navigate('/');
+            }
+          }}
+          className="al-back-btn"
+          title="Return to previous page"
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="19" y1="12" x2="5" y2="12"></line>
+            <polyline points="12 19 5 12 12 5"></polyline>
+          </svg>
+          <span>Back</span>
+        </button>
+
         <div className="al-logo">
           <img src={logoImg} alt="Bharat Devices" className="al-logo-img" />
         </div>
@@ -229,6 +248,30 @@ export default function AdminAuthPage() {
           flex-direction: column;
           align-items: center;
           text-align: center;
+        }
+
+        .al-back-btn {
+          position: absolute;
+          top: 1.5rem;
+          left: 1.5rem;
+          background: #f8fafc;
+          border: 1px solid #e2e8f0;
+          color: #64748b;
+          border-radius: 8px;
+          padding: 6px 12px;
+          font-size: 0.8rem;
+          font-weight: 700;
+          cursor: pointer;
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          transition: all 0.18s ease;
+        }
+
+        .al-back-btn:hover {
+          background: #F97316;
+          border-color: #F97316;
+          color: #ffffff;
         }
 
         .al-logo { margin-bottom: 1.25rem; }

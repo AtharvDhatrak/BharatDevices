@@ -40,8 +40,9 @@ public class SecurityConfig {
                 .requestMatchers("/auth/**").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/enquiry/submit").permitAll()
                 .requestMatchers("/api/enquiry/**").authenticated()
-.requestMatchers(HttpMethod.GET, "/base/getProducts").permitAll()
+                .requestMatchers(HttpMethod.GET, "/base/getProducts").permitAll()
                 .requestMatchers(HttpMethod.GET, "/base/getBrands").permitAll()
+                .requestMatchers(HttpMethod.GET, "/base/getCategories").permitAll()
                 .anyRequest().authenticated()
             )
             // 3. Use the injected field here

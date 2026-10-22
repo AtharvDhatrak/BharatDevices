@@ -1,40 +1,81 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
+import { useTheme } from '../components/ThemeContext';
+import {
+  Package,
+  Plus,
+  Trash2,
+  Check,
+  Building,
+  User,
+  Mail,
+  Phone,
+  MapPin,
+  Clock,
+  ShieldCheck,
+  FileText,
+  Search,
+  X,
+  Copy,
+  CheckCircle2,
+  Sparkles,
+  ArrowRight,
+  ArrowLeft,
+  ChevronRight,
+  SlidersHorizontal,
+  FileCheck
+} from 'lucide-react';
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8089';
 
+const TIMELINE_OPTIONS = [
+  { id: 'immediate', label: '1–2 Weeks (Urgent)' },
+  { id: '1month', label: 'Within 1 Month' },
+  { id: 'quarterly', label: 'Quarterly Deployment' },
+  { id: 'flexible', label: 'Exploring / Flexible' }
+];
+
 export default function Enquiry() {
+  const { isDarkMode } = useTheme();
   const [searchParams] = useSearchParams();
+
   const initProductId   = searchParams.get('product') || '';
   const initProductName = searchParams.get('productName') || '';
   const initProductCat  = searchParams.get('productCategory') || '';
 
+  // Products from Database
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  // Quote Basket State
   const [quoteItems, setQuoteItems] = useState([]);
-  const [openDropdownUid, setOpenDropdownUid] = useState(null);
+
+  // Catalog Picker Modal State
   const [isPickerOpen, setIsPickerOpen] = useState(false);
   const [pickerSearch, setPickerSearch] = useState('');
+  const [pickerCategory, setPickerCategory] = useState('ALL');
 
-  const [step, setStep] = useState(1); // 1 = building quote / catalog, 3 = confirmation
-  const [form, setForm] = useState({ name: '', company: '', email: '', phone: '', delivery: '', message: '' });
+  // Collapsible Quotation & Organization Details Drawer State
+  const [isDetailsOpen, setIsDetailsOpen] = useState(false);
+
+  // Form State (No Procurement Type)
+  const [form, setForm] = useState({
+    name: '',
+    company: '',
+    email: '',
+    phone: '',
+    delivery: '',
+    timeline: 'Within 1 Month',
+    message: ''
+  });
+
+  const [step, setStep] = useState(1); // 1 = Config/RFQ, 3 = Confirmation
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
   const [enquiryId, setEnquiryId] = useState('');
   const [copiedId, setCopiedId] = useState(false);
 
-  // Close open specification dropdown on outside click
-  useEffect(() => {
-    const handleClickOutside = (e) => {
-      if (!e.target.closest('.spec-dropdown-container')) {
-        setOpenDropdownUid(null);
-      }
-    };
-    document.addEventListener('click', handleClickOutside);
-    return () => document.removeEventListener('click', handleClickOutside);
-  }, []);
-
-  // Safe helper for parsing database JSONB strings or value wrappers
+  // Helper to parse JSONB safely
   const parseJsonb = (field, fallback = {}) => {
     try {
       if (!field) return fallback;
@@ -55,105 +96,76 @@ export default function Enquiry() {
     }
   };
 
-  // Helper to extract variants with system pricing and combinations
-  const getProductVariants = (p) => {
-    if (!p?.raw?.variants || !Array.isArray(p.raw.variants)) return [];
-    return p.raw.variants.map((v, i) => {
-      const combo = parseJsonb(v.combination, {});
-      const comboEntries = Object.entries(combo || {});
-      const comboText = comboEntries.map(([k, val]) => `${k}: ${val}`).join(' • ');
-      const label = comboText || (v.sku ? `SKU: ${v.sku}` : `Option #${i + 1}`);
-      const price = Number(v.price) || 0;
-      return {
-        id: v.id || `v-${i}`,
-        sku: v.sku || '',
-        combination: combo,
-        label,
-        price,
-        stock: v.stock !== undefined ? v.stock : null
-      };
-    });
-  };
-
-  // Helper to extract specifications options
-  const getProductSpecsList = (p) => {
-    if (!p?.raw) return [];
-    const specs = parseJsonb(p.raw.specifications || p.raw.specs, {});
+  // Helper to extract clean specifications options without fake prices
+  const getProductSpecs = (p) => {
     const list = [];
-    Object.entries(specs).forEach(([k, val]) => {
-      if (Array.isArray(val) && val.length > 0) {
-        val.forEach(item => {
-          list.push(`${k}: ${item}`);
+
+    // 1. Check variants
+    if (p?.raw?.variants && Array.isArray(p.raw.variants) && p.raw.variants.length > 0) {
+      p.raw.variants.forEach((v, i) => {
+        const combo = parseJsonb(v.combination, {});
+        const entries = Object.entries(combo || {});
+        let label = entries.map(([k, val]) => `${k}: ${val}`).join(' • ');
+        if (!label) label = v.sku ? `SKU: ${v.sku}` : `Configuration #${i + 1}`;
+        list.push({
+          id: v.id || `v-${i}`,
+          label,
+          sku: v.sku || ''
         });
-      } else if (typeof val === 'string' && val.trim()) {
-        list.push(`${k}: ${val.trim()}`);
-      }
-    });
-    return list;
-  };
-
-  // Complete instrument specification options (5GB, 10GB, 50GB or database variants)
-  const getInstrumentSpecs = (p) => {
-    if (!p) return [];
-    const vars = getProductVariants(p);
-    if (vars.length > 0) return vars;
-
-    const list = getProductSpecsList(p);
-    const baseP = Number(p.price) || 12000;
-    if (list.length > 0) {
-      return list.map((specStr, idx) => ({
-        id: `spec-${idx}`,
-        label: specStr,
-        price: baseP > 0 ? baseP : 12000,
-        sku: `SPEC-${idx + 1}`,
-      }));
+      });
+      return list;
     }
 
-    // Default specification tiers for instruments without explicit variants
+    // 2. Check specs object
+    if (p?.raw) {
+      const specs = parseJsonb(p.raw.specifications || p.raw.specs, {});
+      Object.entries(specs).forEach(([k, val]) => {
+        if (Array.isArray(val) && val.length > 0) {
+          val.forEach((item, idx) => {
+            list.push({
+              id: `${k}-${idx}`,
+              label: `${k}: ${item}`,
+              sku: ''
+            });
+          });
+        } else if (typeof val === 'string' && val.trim()) {
+          list.push({
+            id: k,
+            label: `${k}: ${val.trim()}`,
+            sku: ''
+          });
+        }
+      });
+      if (list.length > 0) return list;
+    }
+
+    // 3. Fallback standard spec
     return [
-      { id: 'spec-5gb', label: '5 GB Standard Capacity', price: baseP, sku: 'BD-5GB' },
-      { id: 'spec-10gb', label: '10 GB Enhanced Capacity', price: Math.round(baseP * 1.45), sku: 'BD-10GB' },
-      { id: 'spec-50gb', label: '50 GB Enterprise High-Performance', price: Math.round(baseP * 2.75), sku: 'BD-50GB' },
+      { id: 'std', label: 'Standard Manufacturer Specification', sku: '' }
     ];
   };
 
-  // Helper to create a quote item from a product with multi-specification support
+  // Create a clean Quote Item with multi-specification support
   const createQuoteItem = (product) => {
-    const specs = getInstrumentSpecs(product);
-    const defaultSpec = specs.length > 0 ? specs[0] : null;
-    const initialVariants = defaultSpec
-      ? [
-          {
-            variantId: defaultSpec.id,
-            label: defaultSpec.label,
-            price: Number(defaultSpec.price) || 0,
-            quantity: 1,
-            sku: defaultSpec.sku || '',
-          },
-        ]
-      : [
-          {
-            variantId: 'default',
-            label: 'Standard Specification',
-            price: Number(product.price) || 0,
-            quantity: 1,
-            sku: '',
-          },
-        ];
+    const specs = getProductSpecs(product);
+    const defaultSpec = specs[0]?.label || 'Standard Specification';
 
     return {
       uid: `${product.id}-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
       productId: product.id,
       name: product.name,
-      category: product.category,
+      brand: product.brand || '',
+      category: product.category || 'General',
       image: product.image,
-      raw: product.raw,
       specOptions: specs,
-      selectedVariants: initialVariants,
+      selectedSpecs: [defaultSpec], // Supports MULTIPLE specifications selected at once, or empty for all specs
+      specQuantities: { [defaultSpec]: 1 }, // Per-specification quantity mapping
+      quantity: 1,
+      customNote: ''
     };
   };
 
-  // Fetch products from backend database
+  // Fetch products from database
   useEffect(() => {
     let isMounted = true;
     setLoading(true);
@@ -167,53 +179,36 @@ export default function Enquiry() {
         if (!isMounted) return;
         const rawList = data?.data || data || [];
         const normalized = (Array.isArray(rawList) ? rawList : []).map((p) => {
-          const variants = Array.isArray(p.variants) ? p.variants : [];
-          const prices = variants
-            .map((v) => Number(v.price))
-            .filter((pr) => !isNaN(pr) && pr > 0);
-          const minPrice = prices.length ? Math.min(...prices) : (Number(p.price) || 0);
-
           let imageUrl = '';
           try {
             const imgVal = p.image_urls?.value !== undefined ? p.image_urls.value : p.image_urls;
             const imgs = typeof imgVal === 'string' ? JSON.parse(imgVal) : imgVal;
-            if (Array.isArray(imgs) && imgs.length > 0) {
-              imageUrl = imgs[0];
-            } else if (typeof imgs === 'string' && imgs.trim()) {
-              imageUrl = imgs;
-            }
+            if (Array.isArray(imgs) && imgs.length > 0) imageUrl = imgs[0];
+            else if (typeof imgs === 'string' && imgs.trim()) imageUrl = imgs;
           } catch (_) {}
 
-          if (!imageUrl && variants.length > 0) {
+          if (!imageUrl && p.variants && p.variants.length > 0) {
             try {
-              const vImg = variants[0].imageUrls?.value !== undefined ? variants[0].imageUrls.value : variants[0].imageUrls;
+              const vImg = p.variants[0].imageUrls?.value !== undefined ? p.variants[0].imageUrls.value : p.variants[0].imageUrls;
               const vImgs = typeof vImg === 'string' ? JSON.parse(vImg) : vImg;
-              if (Array.isArray(vImgs) && vImgs.length > 0) {
-                imageUrl = vImgs[0];
-              } else if (typeof vImgs === 'string' && vImgs.trim()) {
-                imageUrl = vImgs;
-              }
+              if (Array.isArray(vImgs) && vImgs.length > 0) imageUrl = vImgs[0];
             } catch (_) {}
-          }
-
-          if (!imageUrl) {
-            imageUrl = 'https://images.unsplash.com/photo-1526738549149-8e07eca6c147?w=500&auto=format&fit=crop&q=60';
           }
 
           return {
             id: p.id,
-            name: p.title || p.name || 'Unnamed Product',
-            category: p.category || p.category_id || p.subCategory || 'General',
-            price: minPrice,
-            image: imageUrl,
-            raw: p,
+            name: p.title || p.name || 'Device',
+            brand: (p.brand || '').trim(),
+            category: p.category || p.category_id || 'General',
+            image: imageUrl || 'https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?auto=format&fit=crop&w=400&q=80',
+            raw: p
           };
         });
 
         setProducts(normalized);
         setLoading(false);
 
-        // Pre-select product if passed via query params
+        // Pre-select if navigated from product detail or listing
         if (initProductId) {
           const match = normalized.find((p) => String(p.id) === String(initProductId));
           if (match) {
@@ -232,9 +227,10 @@ export default function Enquiry() {
             const custom = {
               id: 'custom',
               name: initProductName,
+              brand: '',
               category: initProductCat || 'General',
-              image: 'https://images.unsplash.com/photo-1526738549149-8e07eca6c147?w=500&auto=format&fit=crop&q=60',
-              price: 15000,
+              image: 'https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?auto=format&fit=crop&w=400&q=80',
+              raw: null
             };
             setQuoteItems([createQuoteItem(custom)]);
           }
@@ -242,20 +238,8 @@ export default function Enquiry() {
       })
       .catch((err) => {
         if (!isMounted) return;
-        console.error('[Enquiry] Error fetching added products:', err);
-        setProducts([]);
+        console.error('Error fetching products:', err);
         setLoading(false);
-
-        if (initProductName) {
-          const custom = {
-            id: 'custom',
-            name: initProductName,
-            category: initProductCat || 'General',
-            image: 'https://images.unsplash.com/photo-1526738549149-8e07eca6c147?w=500&auto=format&fit=crop&q=60',
-            price: 15000,
-          };
-          setQuoteItems([createQuoteItem(custom)]);
-        }
       });
 
     return () => {
@@ -263,252 +247,243 @@ export default function Enquiry() {
     };
   }, [initProductId, initProductName, initProductCat]);
 
-  // Add a product to the quote list (supporting multi-variants)
+  // Quote Basket operations
   const addProductToQuote = (product) => {
-    const existingIndex = quoteItems.findIndex((it) => String(it.productId) === String(product.id));
-    if (existingIndex >= 0) {
-      setQuoteItems((prev) => {
-        const copy = [...prev];
-        const target = copy[existingIndex];
-        // If there are unselected variants for this product, add the next one
-        const unselected = (target.specOptions || []).find(
-          (opt) => !target.selectedVariants.some((v) => String(v.variantId) === String(opt.id) || v.label === opt.label)
-        );
-        if (unselected) {
-          target.selectedVariants = [
-            ...target.selectedVariants,
-            {
-              variantId: unselected.id,
-              label: unselected.label,
-              price: Number(unselected.price) || 0,
-              quantity: 1,
-              sku: unselected.sku || '',
-            },
-          ];
-        } else if (target.selectedVariants.length > 0) {
-          target.selectedVariants[0].quantity = (Number(target.selectedVariants[0].quantity) || 1) + 1;
-        }
-        return copy;
-      });
-    } else {
-      setQuoteItems((prev) => [...prev, createQuoteItem(product)]);
-    }
-    setIsPickerOpen(false);
+    setQuoteItems((prev) => [...prev, createQuoteItem(product)]);
   };
 
-  // Toggle specification variant on/off (allowing multi-select of both/multiple variants)
-  const handleToggleVariant = (uid, opt) => {
+  const removeQuoteItem = (uid) => {
+    setQuoteItems((prev) => prev.filter((it) => it.uid !== uid));
+  };
+
+  // Toggle specifications for a single item (supports 0, 1, or multiple specs)
+  const toggleItemSpec = (uid, specLabel) => {
     setQuoteItems((prev) =>
-      prev.map((item) => {
-        if (item.uid !== uid) return item;
+      prev.map((it) => {
+        if (it.uid !== uid) return it;
+        const current = it.selectedSpecs || [];
+        const specQtys = { ...(it.specQuantities || {}) };
+        let updatedSpecs;
 
-        const isChecked = item.selectedVariants.some(
-          (v) => String(v.variantId) === String(opt.id) || v.label === opt.label
-        );
-
-        if (isChecked) {
-          // If already selected, do not remove if it is the only one selected
-          if (item.selectedVariants.length <= 1) {
-            return item;
-          }
-          return {
-            ...item,
-            selectedVariants: item.selectedVariants.filter(
-              (v) => String(v.variantId) !== String(opt.id) && v.label !== opt.label
-            ),
-          };
+        if (current.includes(specLabel)) {
+          // Deselect: allowed even down to 0 (which means quote for all available specs)
+          updatedSpecs = current.filter((s) => s !== specLabel);
+          delete specQtys[specLabel];
         } else {
-          const newVar = {
-            variantId: opt.id,
-            label: opt.label,
-            price: Number(opt.price) || 0,
-            quantity: 1,
-            sku: opt.sku || '',
-          };
-          return {
-            ...item,
-            selectedVariants: [...item.selectedVariants, newVar],
-          };
-        }
-      })
-    );
-  };
-
-  // Select all available specification variants for an item
-  const handleSelectAllVariants = (uid) => {
-    setQuoteItems((prev) =>
-      prev.map((item) => {
-        if (item.uid !== uid) return item;
-        const allAlready = item.selectedVariants.length === item.specOptions.length;
-        if (allAlready && item.specOptions.length > 1) {
-          // Reset to only first variant
-          const first = item.specOptions[0];
-          return {
-            ...item,
-            selectedVariants: [
-              {
-                variantId: first.id,
-                label: first.label,
-                price: Number(first.price) || 0,
-                quantity: item.selectedVariants[0]?.quantity || 1,
-                sku: first.sku || '',
-              },
-            ],
-          };
+          updatedSpecs = [...current, specLabel];
+          if (!specQtys[specLabel]) {
+            specQtys[specLabel] = 1;
+          }
         }
 
-        const all = item.specOptions.map((opt) => {
-          const existing = item.selectedVariants.find(
-            (v) => String(v.variantId) === String(opt.id) || v.label === opt.label
-          );
-          if (existing) return existing;
-          return {
-            variantId: opt.id,
-            label: opt.label,
-            price: Number(opt.price) || 0,
-            quantity: 1,
-            sku: opt.sku || '',
-          };
-        });
-        return { ...item, selectedVariants: all };
-      })
-    );
-  };
+        // Calculate total quantity
+        let totalQty;
+        if (updatedSpecs.length === 0) {
+          totalQty = it.quantity || 1;
+        } else if (updatedSpecs.length === 1) {
+          totalQty = specQtys[updatedSpecs[0]] || it.quantity || 1;
+          specQtys[updatedSpecs[0]] = totalQty;
+        } else {
+          totalQty = updatedSpecs.reduce((sum, s) => sum + (specQtys[s] || 1), 0);
+        }
 
-  // Update quantity for a specific variant
-  const handleVariantQtyChange = (uid, variantId, delta) => {
-    setQuoteItems((prev) =>
-      prev.map((item) => {
-        if (item.uid !== uid) return item;
         return {
-          ...item,
-          selectedVariants: item.selectedVariants.map((v) => {
-            if (String(v.variantId) !== String(variantId)) return v;
-            const newQty = Math.max(1, (Number(v.quantity) || 1) + delta);
-            return { ...v, quantity: newQty };
-          }),
+          ...it,
+          selectedSpecs: updatedSpecs,
+          specQuantities: specQtys,
+          quantity: totalQty
         };
       })
     );
   };
 
-  const handleVariantQtyInput = (uid, variantId, value) => {
-    const val = parseInt(value, 10);
+  // Toggle "All Available Specifications" (Quote for all configs)
+  const selectAllSpecs = (uid) => {
     setQuoteItems((prev) =>
-      prev.map((item) => {
-        if (item.uid !== uid) return item;
+      prev.map((it) => {
+        if (it.uid !== uid) return it;
         return {
-          ...item,
-          selectedVariants: item.selectedVariants.map((v) => {
-            if (String(v.variantId) !== String(variantId)) return v;
-            return { ...v, quantity: isNaN(val) ? '' : val };
-          }),
+          ...it,
+          selectedSpecs: [],
+          specQuantities: {},
+          quantity: it.quantity || 1
         };
       })
     );
   };
 
-  const handleVariantQtyBlur = (uid, variantId) => {
+  // Update quantity for a specific chosen specification
+  const updateSpecQty = (uid, specLabel, delta) => {
     setQuoteItems((prev) =>
-      prev.map((item) => {
-        if (item.uid !== uid) return item;
+      prev.map((it) => {
+        if (it.uid !== uid) return it;
+        const specQtys = { ...(it.specQuantities || {}) };
+        const currentVal = specQtys[specLabel] || 1;
+        const nextVal = Math.max(1, currentVal + delta);
+        specQtys[specLabel] = nextVal;
+
+        const totalQty = (it.selectedSpecs || []).reduce(
+          (sum, s) => sum + (specQtys[s] || 1),
+          0
+        );
+
         return {
-          ...item,
-          selectedVariants: item.selectedVariants.map((v) => {
-            if (String(v.variantId) !== String(variantId)) return v;
-            return { ...v, quantity: Math.max(1, Number(v.quantity) || 1) };
-          }),
+          ...it,
+          specQuantities: specQtys,
+          quantity: totalQty
         };
       })
     );
   };
 
-  // Remove an item entirely from the quote
-  const handleRemoveItem = (uid) => {
-    setQuoteItems((prev) => prev.filter((item) => item.uid !== uid));
+  const setSpecExactQty = (uid, specLabel, val) => {
+    const parsed = Math.max(1, parseInt(val, 10) || 1);
+    setQuoteItems((prev) =>
+      prev.map((it) => {
+        if (it.uid !== uid) return it;
+        const specQtys = { ...(it.specQuantities || {}) };
+        specQtys[specLabel] = parsed;
+
+        const totalQty = (it.selectedSpecs || []).reduce(
+          (sum, s) => sum + (specQtys[s] || 1),
+          0
+        );
+
+        return {
+          ...it,
+          specQuantities: specQtys,
+          quantity: totalQty
+        };
+      })
+    );
   };
 
-  // Calculate Grand Total & Total Units dynamically across all selected variants of all items
-  const grandTotal = useMemo(() => {
-    return quoteItems.reduce((acc, item) => {
-      const itemSum = (item.selectedVariants || []).reduce((sum, v) => {
-        const p = Number(v.price) || 0;
-        const q = Number(v.quantity) || 1;
-        return sum + p * q;
-      }, 0);
-      return acc + itemSum;
-    }, 0);
-  }, [quoteItems]);
+  const updateItemQty = (uid, delta) => {
+    setQuoteItems((prev) =>
+      prev.map((it) => {
+        if (it.uid !== uid) return it;
+        const nextQty = Math.max(1, (it.quantity || 1) + delta);
+        const specQtys = { ...(it.specQuantities || {}) };
+        if (it.selectedSpecs && it.selectedSpecs.length === 1) {
+          specQtys[it.selectedSpecs[0]] = nextQty;
+        }
+        return { ...it, quantity: nextQty, specQuantities: specQtys };
+      })
+    );
+  };
 
+  const setItemExactQty = (uid, qty) => {
+    const val = parseInt(qty, 10);
+    const parsed = isNaN(val) || val < 1 ? 1 : val;
+    setQuoteItems((prev) =>
+      prev.map((it) => {
+        if (it.uid !== uid) return it;
+        const specQtys = { ...(it.specQuantities || {}) };
+        if (it.selectedSpecs && it.selectedSpecs.length === 1) {
+          specQtys[it.selectedSpecs[0]] = parsed;
+        }
+        return { ...it, quantity: parsed, specQuantities: specQtys };
+      })
+    );
+  };
+
+  const updateItemNote = (uid, note) => {
+    setQuoteItems((prev) =>
+      prev.map((it) => (it.uid === uid ? { ...it, customNote: note } : it))
+    );
+  };
+
+  // Total Units
   const totalUnits = useMemo(() => {
-    return quoteItems.reduce((acc, item) => {
-      const itemUnits = (item.selectedVariants || []).reduce(
-        (sum, v) => sum + (Number(v.quantity) || 1),
-        0
-      );
-      return acc + itemUnits;
-    }, 0);
+    return quoteItems.reduce((acc, it) => acc + (Number(it.quantity) || 1), 0);
   }, [quoteItems]);
 
-  const handleFormChange = (e) => setForm((f) => ({ ...f, [e.target.name]: e.target.value }));
+  // Unique categories in database for picker filter
+  const pickerCategories = useMemo(() => {
+    const set = new Set();
+    products.forEach((p) => {
+      if (p.category) set.add(p.category);
+    });
+    return ['ALL', ...Array.from(set).sort()];
+  }, [products]);
 
+  // Filtered products for modal
+  const filteredProducts = useMemo(() => {
+    return products.filter((p) => {
+      const matchCat = pickerCategory === 'ALL' || p.category.toLowerCase() === pickerCategory.toLowerCase();
+      if (!matchCat) return false;
+      if (!pickerSearch.trim()) return true;
+      const q = pickerSearch.toLowerCase().trim();
+      return (
+        p.name.toLowerCase().includes(q) ||
+        p.brand.toLowerCase().includes(q) ||
+        p.category.toLowerCase().includes(q)
+      );
+    });
+  }, [products, pickerCategory, pickerSearch]);
+
+  const handleFormChange = (e) => {
+    const { name, value } = e.target;
+    setForm((f) => ({ ...f, [name]: value }));
+  };
+
+  // Submit Quotation Request to Backend
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (quoteItems.length === 0) {
-      setSubmitError('Please add at least one product or instrument to your quotation request.');
+      setSubmitError('Please select at least one instrument or device to build your quotation.');
       return;
     }
 
     setSubmitting(true);
     setSubmitError('');
 
-    const id = `BD-ENQ-${Date.now().toString().slice(-6)}`;
+    const genId = `BD-RFQ-${Date.now().toString().slice(-6)}`;
 
-    // Product Name summary
+    // Format products for Admin and backend compatibility
     const firstItem = quoteItems[0];
-    const firstVariantsCount = firstItem?.selectedVariants?.length || 1;
-    const firstSpecSummary =
-      firstVariantsCount > 1
-        ? `${firstItem.name} [${firstVariantsCount} Specifications]`
-        : `${firstItem.name} [Spec: ${firstItem?.selectedVariants?.[0]?.label || 'Standard'}]`;
-
+    const firstItemSpecs = (!firstItem.selectedSpecs || firstItem.selectedSpecs.length === 0)
+      ? 'All Available Specifications'
+      : firstItem.selectedSpecs.join(' • ');
     const formattedProductName =
       quoteItems.length === 1
-        ? firstSpecSummary
-        : `${firstSpecSummary} (+${quoteItems.length - 1} other products)`;
+        ? `${firstItem.name} [Specs: ${firstItemSpecs}]`
+        : `${firstItem.name} (+${quoteItems.length - 1} other instruments)`;
 
     const categoriesList = Array.from(new Set(quoteItems.map((i) => i.category))).join(', ');
 
-    // Itemized breakdown: one block per variant so backend & email auto-parser reads each line item
-    let itemCounter = 1;
-    const itemsList = [];
-    quoteItems.forEach((item) => {
-      (item.selectedVariants || []).forEach((v) => {
-        const itemSubtotal = (Number(v.price) || 0) * (Number(v.quantity) || 1);
-        itemsList.push(
-          [
-            `Product #${itemCounter}: ${item.name}`,
-            `• Specification: ${v.label}`,
-            `• System Unit Price: ₹${(Number(v.price) || 0).toLocaleString('en-IN')}`,
-            `• Quantity: ${v.quantity} units`,
-            `• Subtotal: ₹${itemSubtotal.toLocaleString('en-IN')}`,
-          ].join('\n')
-        );
-        itemCounter++;
-      });
-    });
+    // Itemized message structure
+    const itemsLines = quoteItems.map((item, idx) => {
+      let specsJoined;
+      if (!item.selectedSpecs || item.selectedSpecs.length === 0) {
+        specsJoined = 'All Available Specifications (Quote for full range)';
+      } else if (item.selectedSpecs.length === 1) {
+        specsJoined = item.selectedSpecs[0];
+      } else {
+        specsJoined = item.selectedSpecs.map(s => `${s} [Qty: ${item.specQuantities?.[s] || 1}]`).join(' • ');
+      }
 
-    const itemsBreakdown = itemsList.join('\n\n');
+      return [
+        `Product #${idx + 1}: ${item.name}`,
+        item.brand ? `• Brand: ${item.brand} | Category: ${item.category}` : null,
+        `• Specifications & Breakdown: ${specsJoined}`,
+        `• Total Device Quantity: ${item.quantity} units`,
+        `• Commercial Rate: Official Quotation Required`,
+        item.customNote ? `• Note: ${item.customNote}` : null
+      ].filter(Boolean).join('\n');
+    }).join('\n\n');
 
     const structuredMessage = [
-      `[Specification & System Pricing Breakdown]:`,
-      itemsBreakdown,
+      `[Requested Bill of Materials / Products]:`,
+      itemsLines,
       `----------------------------------------`,
-      `• Total Items: ${quoteItems.length} products (${totalUnits} units total)`,
-      `• Estimated Commercial Total: ₹${grandTotal.toLocaleString('en-IN')}`,
+      `• Total Line Items: ${quoteItems.length} products`,
+      `• Total Quantity: ${totalUnits} units`,
+      `• Target Delivery Timeline: ${form.timeline}`,
+      `• Delivery Location: ${form.delivery}`,
       '',
-      `[Customer Requirements / Delivery Notes]:`,
-      form.message?.trim() ? form.message.trim() : 'Standard commercial quotation requested.',
+      `[Organization Requirements & Special Instructions]:`,
+      form.message?.trim() ? form.message.trim() : 'Standard commercial quotation requested with GST invoice.'
     ].join('\n');
 
     try {
@@ -516,7 +491,7 @@ export default function Enquiry() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          enquiryId:       id,
+          enquiryId:       genId,
           name:            form.name,
           company:         form.company,
           email:           form.email,
@@ -526,20 +501,21 @@ export default function Enquiry() {
           productName:     formattedProductName,
           productCategory: categoriesList || 'General',
           quantity:        totalUnits,
-        }),
+        })
       });
+
       const data = await res.json().catch(() => null);
 
       if (res.ok && data?.success !== false) {
-        setEnquiryId(data?.enquiryId || id);
+        setEnquiryId(data?.enquiryId || genId);
+        setIsDetailsOpen(false);
         setStep(3);
       } else {
-        const msg = data?.message || `Submission failed with status ${res.status}. Please try again.`;
-        setSubmitError(msg);
+        setSubmitError(data?.message || 'Failed to submit quote request. Please try again.');
       }
     } catch (err) {
-      console.error('[Enquiry] Network error:', err.message);
-      setSubmitError('Unable to connect to the server. Please check your network connection and try again.');
+      console.error('Submission error:', err);
+      setSubmitError('Unable to connect to server. Please verify your connection.');
     } finally {
       setSubmitting(false);
     }
@@ -552,1708 +528,2133 @@ export default function Enquiry() {
     setTimeout(() => setCopiedId(false), 2000);
   };
 
-  const filteredPickerProducts = products.filter((p) => {
-    if (!pickerSearch.trim()) return true;
-    const q = pickerSearch.toLowerCase().trim();
-    return (p.name || '').toLowerCase().includes(q) || (p.category || '').toLowerCase().includes(q);
-  });
+  // Color Tokens synchronized with Admin Portal
+  const themeStyles = {
+    pageBg: isDarkMode ? '#070d1e' : '#f8fafc',
+    cardBg: isDarkMode ? '#0e1830' : '#ffffff',
+    subCardBg: isDarkMode ? '#132244' : '#f8fafc',
+    borderColor: isDarkMode ? '#192b50' : '#e2e8f0',
+    borderLight: isDarkMode ? '#223867' : '#cbd5e1',
+    textPrimary: isDarkMode ? '#f8fafc' : '#0f172a',
+    textSecondary: isDarkMode ? '#94a3b8' : '#64748b',
+    inputBg: isDarkMode ? '#070d1e' : '#ffffff',
+    accentOrange: '#F97316',
+    accentOrangeSoft: isDarkMode ? 'rgba(249, 115, 22, 0.15)' : '#fff7ed',
+    accentGreen: '#22c55e',
+    accentGreenSoft: isDarkMode ? 'rgba(34, 197, 94, 0.15)' : '#f0fdf4',
+  };
 
   return (
-    <div className="enquiry-page">
-      <div className="enquiry-container">
-        {/* Subtle Top Header */}
-        <div className="enquiry-header">
-          <div className="enquiry-badge">Commercial Quotation Portal</div>
-          <h1 className="enquiry-title">Request a Business Quotation</h1>
-          <p className="enquiry-desc">
-            Select one or multiple instruments, configure technical specifications, and receive an automated quotation based on official system pricing.
-          </p>
+    <div className="enquiry-page" style={{ backgroundColor: themeStyles.pageBg, color: themeStyles.textPrimary }}>
+      <div className={`enquiry-container ${step === 3 ? 'step-confirmation-active' : ''}`}>
+        
+        {/* Top Header — Clean, no redundant theme button */}
+        <div className="enquiry-header-row">
+          <div className="header-text-col">
+            <div className="portal-badge" style={{ backgroundColor: themeStyles.accentOrangeSoft, color: themeStyles.accentOrange }}>
+              <ShieldCheck size={14} /> Commercial Quotation & RFQ Portal
+            </div>
+            <h1 className="portal-title">Request Enterprise Quotation</h1>
+            <p className="portal-subtitle" style={{ color: themeStyles.textSecondary }}>
+              Select devices, configure technical specifications, and receive a customized commercial proposal with volume discounts and official GST invoicing.
+            </p>
+          </div>
         </div>
 
-        {/* Step 3: Thank You / Confirmation */}
+        {/* STEP 3: SUBMITTED CONFIRMATION */}
         {step === 3 ? (
-          <div className="thank-you-card">
-            <div className="thank-icon">
-              <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <polyline points="20 6 9 17 4 12" />
-              </svg>
+          <div className="success-card" style={{ backgroundColor: themeStyles.cardBg, borderColor: themeStyles.borderColor }}>
+            <div className="success-icon-wrap">
+              <CheckCircle2 size={42} color="#ffffff" />
             </div>
-            <h2 className="thank-heading">Quotation Request Logged</h2>
-            <p className="thank-desc">Your multi-product quotation has been received by our commercial sales team.</p>
 
-            <div className="enquiry-id-box">
-              <span className="enquiry-id-label">Tracking ID:</span>
-              <strong className="enquiry-id-value">{enquiryId}</strong>
-              <button type="button" onClick={handleCopyId} className="btn-copy-id">
-                {copiedId ? 'Copied ✓' : 'Copy'}
+            <h2 className="success-heading" style={{ color: themeStyles.textPrimary }}>Quotation Request Successfully Registered</h2>
+            <p className="success-desc" style={{ color: themeStyles.textSecondary }}>
+              Your multi-instrument quotation ticket has been assigned to our enterprise solutions team.
+            </p>
+
+            <div className="tracking-id-card" style={{ backgroundColor: themeStyles.subCardBg, borderColor: themeStyles.borderColor }}>
+              <span className="tracking-label" style={{ color: themeStyles.textSecondary }}>Official Tracking Reference:</span>
+              <strong className="tracking-val" style={{ color: themeStyles.accentOrange }}>{enquiryId}</strong>
+              <button type="button" onClick={handleCopyId} className="copy-btn">
+                {copiedId ? <Check size={14} /> : <Copy size={14} />} {copiedId ? 'Copied' : 'Copy'}
               </button>
             </div>
 
-            <div className="thank-summary-box">
-              <div className="thank-summary-row">
-                <span>Products Quoted:</span>
-                <strong>{quoteItems.length} Products ({totalUnits} units)</strong>
-              </div>
-              <div className="thank-summary-row">
-                <span>Estimated Commercial Total:</span>
-                <strong style={{ color: '#f97316' }}>₹{grandTotal.toLocaleString('en-IN')}</strong>
+            {/* Requested Items Summary Table */}
+            <div className="summary-list-card" style={{ backgroundColor: themeStyles.subCardBg, borderColor: themeStyles.borderColor }}>
+              <h4 style={{ margin: '0 0 12px 0', fontSize: '14px', fontWeight: '700' }}>
+                Requested Items ({quoteItems.length} Products · {totalUnits} Units):
+              </h4>
+              <div className="summary-items-list">
+                {quoteItems.map((it, idx) => (
+                  <div key={it.uid} className="summary-item-row" style={{ borderBottomColor: themeStyles.borderColor }}>
+                    <div className="summary-item-left">
+                      <span className="summary-item-num">#{idx + 1}</span>
+                      <img src={it.image} alt={it.name} className="summary-item-thumb" />
+                      <div>
+                        <div className="summary-item-name" style={{ color: themeStyles.textPrimary }}>{it.name}</div>
+                        <div className="summary-item-spec" style={{ color: themeStyles.textSecondary }}>
+                          {!it.selectedSpecs || it.selectedSpecs.length === 0
+                            ? 'All Available Specifications (Quote for All)'
+                            : it.selectedSpecs.length === 1
+                            ? it.selectedSpecs[0]
+                            : it.selectedSpecs.map(s => `${s} (${it.specQuantities?.[s] || 1} units)`).join(' • ')}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="summary-item-qty">
+                      <span className="qty-tag">{it.quantity} {it.quantity === 1 ? 'Unit' : 'Units'}</span>
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
 
-            <p className="thank-followup">An official quotation with GST tax breakdown will be dispatched to your email shortly.</p>
+            <div className="next-steps-banner" style={{ backgroundColor: themeStyles.accentGreenSoft, borderColor: themeStyles.accentGreen }}>
+              <Sparkles size={18} color="#22c55e" />
+              <span>
+                An authorized Bharat Devices sales engineer will review your specification requirements and dispatch an official quotation PDF to <strong>{form.email}</strong> within 2 to 4 business hours.
+              </span>
+            </div>
 
-            <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', justifyContent: 'center', marginTop: '8px' }}>
-              <Link to="/" className="btn-back-home">Back to Home</Link>
-              <Link to="/products" className="btn-explore-catalog">Browse Catalog</Link>
+            <div className="success-actions">
+              <Link to="/products" className="btn-browse-more">
+                Browse More Products
+              </Link>
+              <Link to="/" className="btn-return-home" style={{ color: themeStyles.textSecondary, borderColor: themeStyles.borderColor }}>
+                Return to Home
+              </Link>
             </div>
           </div>
         ) : (
-          /* Step 1 & 2: Main Layout */
-          <div className="quote-grid-layout">
-            {/* ─── LEFT COLUMN: QUOTATION ITEMS & DYNAMIC QUOTES ─── */}
-            <div className="quote-items-col">
-              <div className="section-header-row">
+          /* STEP 1: FULL-WIDTH UNCLUTTERED RFQ BUILDER */
+          <div className="rfq-full-width-layout">
+            
+            {/* FULL-WIDTH SECTION: Instruments in Quote */}
+            <div className="rfq-main-col">
+              <div className="col-header-bar" style={{ backgroundColor: themeStyles.cardBg, borderColor: themeStyles.borderColor }}>
                 <div>
-                  <h2 className="section-title">Selected Instruments</h2>
-                  <span className="section-subtitle">
-                    {quoteItems.length} {quoteItems.length === 1 ? 'Product' : 'Products'} · {totalUnits} {totalUnits === 1 ? 'Unit' : 'Units'}
+                  <h2 className="col-title" style={{ color: themeStyles.textPrimary }}>
+                    Instruments in Quote
+                  </h2>
+                  <span className="col-subtitle" style={{ color: themeStyles.textSecondary }}>
+                    {quoteItems.length} {quoteItems.length === 1 ? 'Product' : 'Products'} · {totalUnits} Total Units
                   </span>
                 </div>
 
-                <button
-                  type="button"
-                  onClick={() => setIsPickerOpen(true)}
-                  className="btn-add-product"
-                >
-                  + Add Product
-                </button>
-              </div>
-
-              {/* Items List */}
-              {quoteItems.length === 0 ? (
-                <div className="empty-quote-state">
-                  <div className="empty-icon">
-                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-                      <rect x="2" y="3" width="20" height="14" rx="2" />
-                      <line x1="8" y1="21" x2="16" y2="21" />
-                      <line x1="12" y1="17" x2="12" y2="21" />
-                    </svg>
-                  </div>
-                  <h3>No instruments added yet</h3>
-                  <p>Add devices from our catalog to build your custom business quote.</p>
+                <div className="col-header-actions">
                   <button
                     type="button"
                     onClick={() => setIsPickerOpen(true)}
-                    className="btn-browse-catalog"
+                    className="btn-open-picker"
                   >
-                    Select Instruments from Catalog →
+                    <Plus size={16} /> Add Product
+                  </button>
+
+                  {/* SINGLE PROMINENT ACTION BUTTON */}
+                  <button
+                    type="button"
+                    onClick={() => setIsDetailsOpen(true)}
+                    className="btn-trigger-drawer"
+                    title="Open Contact Info"
+                    disabled={quoteItems.length === 0}
+                    style={{
+                      opacity: quoteItems.length === 0 ? 0.6 : 1,
+                      cursor: quoteItems.length === 0 ? 'not-allowed' : 'pointer'
+                    }}
+                  >
+                    <User size={16} />
+                    <span>Contact Info</span>
+                    <ArrowRight size={17} className="drawer-arrow-icon" />
                   </button>
                 </div>
-              ) : (
-                <div className="quote-items-list">
-                  {quoteItems.map((item) => {
-                    const selectedVars = item.selectedVariants || [];
-                    const itemUnits = selectedVars.reduce((s, v) => s + (Number(v.quantity) || 1), 0);
-                    const itemSubtotal = selectedVars.reduce((s, v) => s + (Number(v.price) || 0) * (Number(v.quantity) || 1), 0);
-                    const hasMultipleSelected = selectedVars.length > 1;
-                    const isDropdownOpen = openDropdownUid === item.uid;
+              </div>
 
-                    return (
-                      <div
-                        key={item.uid}
-                        className={`quote-item-card ${isDropdownOpen ? 'card-dropdown-active' : ''}`}
-                      >
-                        {/* Top: Image, Name & Delete */}
-                        <div className="item-header-row">
-                          <img src={item.image} alt={item.name} className="item-thumb" />
-                          <div className="item-meta">
-                            <h4 className="item-title">{item.name}</h4>
-                            <span className="item-cat">{item.category}</span>
-                          </div>
-                          <button
-                            type="button"
-                            onClick={() => handleRemoveItem(item.uid)}
-                            className="btn-remove-item"
-                            title="Remove product from quote"
-                          >
-                            ✕
-                          </button>
-                        </div>
+              {/* Scrollable Instruments in Quote Container */}
+              <div className="instruments-scroll-wrap">
+                {quoteItems.length === 0 ? (
+                  <div className="empty-rfq-card" style={{ backgroundColor: themeStyles.cardBg, borderColor: themeStyles.borderColor }}>
+                    <div className="empty-icon-wrap" style={{ backgroundColor: themeStyles.subCardBg }}>
+                      <Package size={38} color={themeStyles.accentOrange} />
+                    </div>
+                    <h3 style={{ color: themeStyles.textPrimary, margin: '12px 0 6px 0' }}>No Instruments Added Yet</h3>
+                    <p style={{ color: themeStyles.textSecondary, margin: '0 0 18px 0', fontSize: '13px', maxWidth: '440px', lineHeight: '1.5' }}>
+                      Select devices from our enterprise catalog to configure technical specifications and raise your official quotation.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => setIsPickerOpen(true)}
+                      className="btn-browse-catalog-primary"
+                    >
+                      <Plus size={16} /> Select Instruments from Catalog
+                    </button>
+                  </div>
+                ) : (
+                  <div className="quote-cards-stack">
+                    {quoteItems.map((item, idx) => {
+                      const selectedCount = (item.selectedSpecs || []).length;
+                      return (
+                        <div
+                          key={item.uid}
+                          className="product-quote-card"
+                          style={{
+                            backgroundColor: themeStyles.cardBg,
+                            borderColor: themeStyles.borderColor
+                          }}
+                        >
+                          {/* Top Header of Product */}
+                          <div className="card-top-row">
+                            <div className="card-product-meta">
+                              <img src={item.image} alt={item.name} className="product-thumb" />
+                              <div className="meta-text">
+                                <div className="meta-badge-row">
+                                  {item.brand && <span className="brand-pill">{item.brand}</span>}
+                                  <span className="cat-pill" style={{ color: themeStyles.textSecondary }}>{item.category}</span>
+                                </div>
+                                <h3 className="product-title" style={{ color: themeStyles.textPrimary }}>
+                                  {item.name}
+                                </h3>
+                              </div>
+                            </div>
 
-                        {/* Middle: Clean Specification Dropdown with Multi-Selection Access */}
-                        <div className="item-spec-box">
-                          <div className="spec-label-row">
-                            <label className="item-field-label">Specification / Variant:</label>
-                            {item.specOptions.length > 1 && (
-                              <span className="spec-count-tag">
-                                {selectedVars.length} of {item.specOptions.length} selected
-                              </span>
-                            )}
-                          </div>
-
-                          <div className="spec-dropdown-container">
                             <button
                               type="button"
-                              className={`spec-dropdown-trigger ${isDropdownOpen ? 'open' : ''}`}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setOpenDropdownUid(isDropdownOpen ? null : item.uid);
-                              }}
+                              onClick={() => removeQuoteItem(item.uid)}
+                              className="btn-remove-card"
+                              title="Remove item"
                             >
-                              <div className="spec-trigger-left">
-                                {hasMultipleSelected ? (
-                                  <div className="multi-tag-display">
-                                    <span className="multi-count-pill">{selectedVars.length} Selected</span>
-                                    <span className="multi-summary-text">
-                                      {selectedVars.map((v) => v.label.split('•')[0].trim()).join(' • ')}
-                                    </span>
-                                  </div>
-                                ) : (
-                                  <div className="single-spec-display">
-                                    <span className="single-spec-title">
-                                      {selectedVars[0]?.label || 'Standard Specification'}
-                                    </span>
-                                    <span className="single-spec-price-tag">
-                                      — ₹{(Number(selectedVars[0]?.price) || 0).toLocaleString('en-IN')} / unit
-                                    </span>
-                                  </div>
-                                )}
-                              </div>
-
-                              <div className="spec-trigger-right">
-                                <span className={`dropdown-chevron ${isDropdownOpen ? 'rotated' : ''}`}>▼</span>
-                              </div>
+                              <Trash2 size={16} />
                             </button>
+                          </div>
 
-                            {/* Multi-Select Floating Dropdown Menu */}
-                            {isDropdownOpen && (
-                              <div className="spec-dropdown-menu" onClick={(e) => e.stopPropagation()}>
-                                <div className="spec-dropdown-header">
-                                  <div>
-                                    <span className="menu-header-title">Select Specifications</span>
-                                    <span className="menu-header-hint">Tap to check both or multiple variants</span>
-                                  </div>
-                                  {item.specOptions.length > 1 && (
-                                    <button
-                                      type="button"
-                                      className="spec-btn-action"
-                                      onClick={() => handleSelectAllVariants(item.uid)}
-                                    >
-                                      {selectedVars.length === item.specOptions.length ? 'Reset to Single' : 'Select All'}
-                                    </button>
-                                  )}
+                          {/* Multi-Specification Selection (One or Multiple at once, or Quote for All Specs) */}
+                          <div className="spec-section-box" style={{ backgroundColor: themeStyles.subCardBg, borderColor: themeStyles.borderColor }}>
+                            <div className="spec-section-header">
+                              <span className="spec-label" style={{ color: themeStyles.textSecondary }}>
+                                SPECIFICATIONS <span style={{ fontSize: '0.73rem', opacity: 0.85 }}>(SELECT MULTIPLE OR QUOTE FOR ALL):</span>
+                              </span>
+                              <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                                {item.specOptions.length > 1 && (
+                                  <button
+                                    type="button"
+                                    onClick={() => selectAllSpecs(item.uid)}
+                                    style={{
+                                      background: 'none',
+                                      border: 'none',
+                                      color: themeStyles.accentOrange,
+                                      fontSize: '11px',
+                                      fontWeight: '700',
+                                      cursor: 'pointer',
+                                      padding: '2px 4px',
+                                      textDecoration: 'underline'
+                                    }}
+                                  >
+                                    {selectedCount === item.specOptions.length ? 'Clear Specs' : 'Select All Specs'}
+                                  </button>
+                                )}
+                                <span className="spec-count-tag" style={{ backgroundColor: themeStyles.accentOrangeSoft, color: themeStyles.accentOrange }}>
+                                  {selectedCount === 0 ? 'All Specs (Quote All)' : `${selectedCount} Selected`}
+                                </span>
+                              </div>
+                            </div>
+
+                            <div className="spec-pills-row">
+                              {/* Option: Quote for All Available Specs */}
+                              <button
+                                type="button"
+                                className={`spec-chip-btn ${selectedCount === 0 ? 'spec-selected' : ''}`}
+                                style={{
+                                  backgroundColor: selectedCount === 0 ? themeStyles.accentOrange : (isDarkMode ? '#0e1830' : '#ffffff'),
+                                  borderColor: selectedCount === 0 ? themeStyles.accentOrange : themeStyles.borderColor,
+                                  color: selectedCount === 0 ? '#ffffff' : themeStyles.textPrimary,
+                                  fontWeight: selectedCount === 0 ? '700' : '500'
+                                }}
+                                onClick={() => {
+                                  // Clear selected specs so quote includes all available specs
+                                  setQuoteItems(prev => prev.map(it => it.uid === item.uid ? { ...it, selectedSpecs: [], specQuantities: {} } : it));
+                                }}
+                              >
+                                <span className={`chip-indicator-box ${selectedCount === 0 ? 'box-checked' : ''}`}>
+                                  {selectedCount === 0 && <Check size={11} strokeWidth={3} />}
+                                </span>
+                                ★ Quote for All Available Specs
+                              </button>
+
+                              {item.specOptions.map((opt) => {
+                                const isSelected = (item.selectedSpecs || []).includes(opt.label);
+                                return (
+                                  <button
+                                    key={opt.id}
+                                    type="button"
+                                    className={`spec-chip-btn ${isSelected ? 'spec-selected' : ''}`}
+                                    style={{
+                                      backgroundColor: isSelected ? themeStyles.accentOrange : (isDarkMode ? '#0e1830' : '#ffffff'),
+                                      borderColor: isSelected ? themeStyles.accentOrange : themeStyles.borderColor,
+                                      color: isSelected ? '#ffffff' : themeStyles.textPrimary,
+                                    }}
+                                    onClick={() => toggleItemSpec(item.uid, opt.label)}
+                                  >
+                                    <span className={`chip-indicator-box ${isSelected ? 'box-checked' : ''}`}>
+                                      {isSelected && <Check size={11} strokeWidth={3} />}
+                                    </span>
+                                    {opt.label}
+                                  </button>
+                                );
+                              })}
+                            </div>
+
+                            {/* Quantities Breakdown if multiple (2+) specifications selected */}
+                            {selectedCount >= 2 && (
+                              <div className="spec-quantities-container" style={{ marginTop: '12px', paddingTop: '12px', borderTop: `1px dashed ${themeStyles.borderColor}` }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                                  <span style={{ fontSize: '12px', fontWeight: '700', color: themeStyles.textSecondary, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                                    Quantity per Selected Specification:
+                                  </span>
+                                  <span style={{ fontSize: '12px', fontWeight: '700', color: themeStyles.accentOrange }}>
+                                    Total Units: {item.quantity}
+                                  </span>
                                 </div>
 
-                                <div className="spec-options-scroll">
-                                  {item.specOptions.map((opt) => {
-                                    const isChecked = selectedVars.some(
-                                      (v) => String(v.variantId) === String(opt.id) || v.label === opt.label
-                                    );
+                                <div className="spec-quantities-grid">
+                                  {item.selectedSpecs.map((specLabel) => {
+                                    const specQty = (item.specQuantities && item.specQuantities[specLabel]) || 1;
                                     return (
                                       <div
-                                        key={opt.id}
-                                        className={`spec-option-row ${isChecked ? 'selected' : ''}`}
-                                        onClick={() => handleToggleVariant(item.uid, opt)}
+                                        key={specLabel}
+                                        className="spec-quantity-card"
+                                        style={{
+                                          backgroundColor: isDarkMode ? '#0e1830' : '#ffffff',
+                                          borderColor: themeStyles.borderColor
+                                        }}
                                       >
-                                        <div className={`spec-custom-checkbox ${isChecked ? 'checked' : ''}`}>
-                                          {isChecked ? '✓' : ''}
+                                        <div className="spec-qty-title" title={specLabel} style={{ color: themeStyles.textPrimary }}>
+                                          {specLabel}
                                         </div>
-                                        <div className="spec-option-info">
-                                          <span className="spec-option-name">{opt.label}</span>
-                                          <span className="spec-option-cost">
-                                            ₹{Number(opt.price).toLocaleString('en-IN')} / unit
-                                          </span>
+                                        <div className="stepper-wrap" style={{ borderColor: themeStyles.borderColor }}>
+                                          <button
+                                            type="button"
+                                            className="stepper-btn"
+                                            onClick={() => updateSpecQty(item.uid, specLabel, -1)}
+                                            style={{ color: themeStyles.textPrimary }}
+                                          >
+                                            −
+                                          </button>
+                                          <input
+                                            type="number"
+                                            min="1"
+                                            value={specQty}
+                                            onChange={(e) => setSpecExactQty(item.uid, specLabel, e.target.value)}
+                                            className="stepper-input"
+                                            style={{ color: themeStyles.textPrimary }}
+                                          />
+                                          <button
+                                            type="button"
+                                            className="stepper-btn"
+                                            onClick={() => updateSpecQty(item.uid, specLabel, 1)}
+                                            style={{ color: themeStyles.textPrimary }}
+                                          >
+                                            +
+                                          </button>
                                         </div>
                                       </div>
                                     );
                                   })}
                                 </div>
-
-                                <div className="spec-dropdown-footer">
-                                  <span className="footer-notice">
-                                    {selectedVars.length} specification{selectedVars.length !== 1 ? 's' : ''} active
-                                  </span>
-                                  <button
-                                    type="button"
-                                    className="spec-btn-done"
-                                    onClick={() => setOpenDropdownUid(null)}
-                                  >
-                                    Done ✓
-                                  </button>
-                                </div>
                               </div>
                             )}
                           </div>
+
+                          {/* Overall Quantity (when 0 or 1 spec selected) & Notes */}
+                          <div className="card-bottom-row">
+                            {selectedCount < 2 ? (
+                              <div className="qty-block">
+                                <span className="qty-label" style={{ color: themeStyles.textSecondary }}>
+                                  {selectedCount === 0 ? 'Total Units (All Specs):' : 'Required Quantity:'}
+                                </span>
+                                <div className="stepper-wrap" style={{ borderColor: themeStyles.borderColor }}>
+                                  <button
+                                    type="button"
+                                    className="stepper-btn"
+                                    onClick={() => updateItemQty(item.uid, -1)}
+                                    style={{ color: themeStyles.textPrimary }}
+                                  >
+                                    −
+                                  </button>
+                                  <input
+                                    type="number"
+                                    min="1"
+                                    value={item.quantity}
+                                    onChange={(e) => setItemExactQty(item.uid, e.target.value)}
+                                    className="stepper-input"
+                                    style={{ color: themeStyles.textPrimary }}
+                                  />
+                                  <button
+                                    type="button"
+                                    className="stepper-btn"
+                                    onClick={() => updateItemQty(item.uid, 1)}
+                                    style={{ color: themeStyles.textPrimary }}
+                                  >
+                                    +
+                                  </button>
+                                </div>
+
+                                {/* Quantity Quick Presets */}
+                                <div className="qty-presets">
+                                  {[5, 10, 25, 50, 100].map((preset) => (
+                                    <button
+                                      key={preset}
+                                      type="button"
+                                      onClick={() => setItemExactQty(item.uid, preset)}
+                                      className="preset-pill"
+                                      style={{
+                                        borderColor: themeStyles.borderColor,
+                                        color: themeStyles.textSecondary,
+                                        backgroundColor: item.quantity === preset ? themeStyles.accentOrangeSoft : 'transparent'
+                                      }}
+                                    >
+                                      {preset}
+                                    </button>
+                                  ))}
+                                </div>
+                              </div>
+                            ) : null}
+
+                            {/* Optional item note input */}
+                            <div className="item-note-wrap" style={{ width: selectedCount >= 2 ? '100%' : undefined }}>
+                              <input
+                                type="text"
+                                placeholder="Optional notes for this device (e.g. custom power cord, asset tagging, rack kit)..."
+                                value={item.customNote}
+                                onChange={(e) => updateItemNote(item.uid, e.target.value)}
+                                className="item-note-input"
+                                style={{
+                                  backgroundColor: themeStyles.inputBg,
+                                  borderColor: themeStyles.borderColor,
+                                  color: themeStyles.textPrimary
+                                }}
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+
+                    {/* Add another product trigger */}
+                    <div className="bottom-instruments-actions">
+                      <button
+                        type="button"
+                        onClick={() => setIsPickerOpen(true)}
+                        className="btn-add-more-dashed"
+                        style={{
+                          borderColor: themeStyles.borderColor,
+                          color: themeStyles.accentOrange,
+                          backgroundColor: themeStyles.cardBg
+                        }}
+                      >
+                        <Plus size={18} /> Add Another Device to Quote
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* COLLAPSIBLE SLIDE-OUT DRAWER FOR QUOTATION & ORGANIZATION DETAILS */}
+            {isDetailsOpen && (
+              <div className="drawer-overlay" onClick={() => setIsDetailsOpen(false)}>
+                <div
+                  className="details-drawer"
+                  style={{
+                    backgroundColor: themeStyles.cardBg,
+                    borderLeftColor: themeStyles.borderColor,
+                    color: themeStyles.textPrimary
+                  }}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  {/* Drawer Header */}
+                  <div className="drawer-header" style={{ borderBottomColor: themeStyles.borderColor }}>
+                    <div>
+                      <div className="drawer-badge" style={{ color: themeStyles.accentOrange }}>
+                        <FileCheck size={14} /> STEP 2: CONTACT & ORGANIZATION DETAILS
+                      </div>
+                      <h3 className="drawer-title" style={{ color: themeStyles.textPrimary }}>
+                        Contact Info & Organization Details
+                      </h3>
+                      <p className="drawer-sub" style={{ color: themeStyles.textSecondary }}>
+                        Enter your business information to receive an official commercial proposal with GST invoice breakdown.
+                      </p>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => setIsDetailsOpen(false)}
+                      className="btn-drawer-collapse"
+                      title="Collapse Drawer"
+                      style={{ color: themeStyles.textSecondary, borderColor: themeStyles.borderColor }}
+                    >
+                      <ArrowRight size={20} />
+                    </button>
+                  </div>
+
+                  {/* Drawer Form Body */}
+                  <div className="drawer-body">
+                    {submitError && (
+                      <div className="error-alert">
+                        {submitError}
+                      </div>
+                    )}
+
+                    <form onSubmit={handleSubmit} className="drawer-form">
+                      <div className="form-grid-2">
+                        <div className="form-field">
+                          <label className="field-label" style={{ color: themeStyles.textSecondary }}>
+                            <User size={13} /> Full Name <span className="req">*</span>
+                          </label>
+                          <input
+                            type="text"
+                            name="name"
+                            value={form.name}
+                            onChange={handleFormChange}
+                            placeholder="e.g. Rahul Sharma"
+                            required
+                            className="field-input"
+                            style={{
+                              backgroundColor: themeStyles.inputBg,
+                              borderColor: themeStyles.borderColor,
+                              color: themeStyles.textPrimary
+                            }}
+                          />
                         </div>
 
-                        {/* Bottom: Variant Quantities & Subtotals */}
-                        {hasMultipleSelected ? (
-                          <div className="item-variants-list-wrap">
-                            <div className="variants-list-head">
-                              <span>Configured Specifications ({selectedVars.length}):</span>
-                            </div>
-                            <div className="variants-list">
-                              {selectedVars.map((v) => {
-                                const vSub = (Number(v.price) || 0) * (Number(v.quantity) || 1);
-                                return (
-                                  <div key={v.variantId || v.label} className="variant-line-item">
-                                    <div className="variant-line-meta">
-                                      <span className="variant-line-label">{v.label}</span>
-                                      <span className="variant-line-unit-rate">
-                                        ₹{(Number(v.price) || 0).toLocaleString('en-IN')} / unit
-                                      </span>
-                                    </div>
+                        <div className="form-field">
+                          <label className="field-label" style={{ color: themeStyles.textSecondary }}>
+                            <Building size={13} /> Company / Organization <span className="req">*</span>
+                          </label>
+                          <input
+                            type="text"
+                            name="company"
+                            value={form.company}
+                            onChange={handleFormChange}
+                            placeholder="e.g. Acme Technologies Pvt Ltd"
+                            required
+                            className="field-input"
+                            style={{
+                              backgroundColor: themeStyles.inputBg,
+                              borderColor: themeStyles.borderColor,
+                              color: themeStyles.textPrimary
+                            }}
+                          />
+                        </div>
+                      </div>
 
-                                    <div className="variant-line-actions">
-                                      <div className="qty-controls">
-                                        <button
-                                          type="button"
-                                          className="qty-btn"
-                                          onClick={() => handleVariantQtyChange(item.uid, v.variantId, -1)}
-                                        >
-                                          −
-                                        </button>
-                                        <input
-                                          type="number"
-                                          className="qty-input"
-                                          min="1"
-                                          value={v.quantity}
-                                          onChange={(e) => handleVariantQtyInput(item.uid, v.variantId, e.target.value)}
-                                          onBlur={() => handleVariantQtyBlur(item.uid, v.variantId)}
-                                        />
-                                        <button
-                                          type="button"
-                                          className="qty-btn"
-                                          onClick={() => handleVariantQtyChange(item.uid, v.variantId, 1)}
-                                        >
-                                          +
-                                        </button>
-                                      </div>
+                      <div className="form-grid-2">
+                        <div className="form-field">
+                          <label className="field-label" style={{ color: themeStyles.textSecondary }}>
+                            <Mail size={13} /> Work Email <span className="req">*</span>
+                          </label>
+                          <input
+                            type="email"
+                            name="email"
+                            value={form.email}
+                            onChange={handleFormChange}
+                            placeholder="rahul@company.com"
+                            required
+                            className="field-input"
+                            style={{
+                              backgroundColor: themeStyles.inputBg,
+                              borderColor: themeStyles.borderColor,
+                              color: themeStyles.textPrimary
+                            }}
+                          />
+                        </div>
 
-                                      <span className="variant-line-subtotal">₹{vSub.toLocaleString('en-IN')}</span>
+                        <div className="form-field">
+                          <label className="field-label" style={{ color: themeStyles.textSecondary }}>
+                            <Phone size={13} /> Phone / WhatsApp <span className="req">*</span>
+                          </label>
+                          <input
+                            type="tel"
+                            name="phone"
+                            value={form.phone}
+                            onChange={handleFormChange}
+                            placeholder="+91 98765 43210"
+                            required
+                            className="field-input"
+                            style={{
+                              backgroundColor: themeStyles.inputBg,
+                              borderColor: themeStyles.borderColor,
+                              color: themeStyles.textPrimary
+                            }}
+                          />
+                        </div>
+                      </div>
 
-                                      {selectedVars.length > 1 && (
-                                        <button
-                                          type="button"
-                                          className="btn-del-variant"
-                                          title="Deselect this specification"
-                                          onClick={() => handleToggleVariant(item.uid, { id: v.variantId, label: v.label })}
-                                        >
-                                          ✕
-                                        </button>
-                                      )}
-                                    </div>
-                                  </div>
-                                );
-                              })}
-                            </div>
+                      <div className="form-field">
+                        <label className="field-label" style={{ color: themeStyles.textSecondary }}>
+                          <MapPin size={13} /> Delivery Location / Destination City <span className="req">*</span>
+                        </label>
+                        <input
+                          type="text"
+                          name="delivery"
+                          value={form.delivery}
+                          onChange={handleFormChange}
+                          placeholder="e.g. BKC Complex, Mumbai, Maharashtra"
+                          required
+                          className="field-input"
+                          style={{
+                            backgroundColor: themeStyles.inputBg,
+                            borderColor: themeStyles.borderColor,
+                            color: themeStyles.textPrimary
+                          }}
+                        />
+                      </div>
 
-                            <div className="item-footer-row product-total-bar">
-                              <span className="product-total-label">Subtotal for {item.name}:</span>
-                              <strong className="product-total-amount">
-                                {itemUnits} {itemUnits === 1 ? 'Unit' : 'Units'} · ₹{itemSubtotal.toLocaleString('en-IN')}
-                              </strong>
-                            </div>
-                          </div>
+                      {/* Expected Delivery Timeline */}
+                      <div className="form-field">
+                        <label className="field-label" style={{ color: themeStyles.textSecondary }}>
+                          <Clock size={13} /> Expected Delivery Timeline
+                        </label>
+                        <div className="chip-options-grid">
+                          {TIMELINE_OPTIONS.map((t) => (
+                            <button
+                              key={t.id}
+                              type="button"
+                              className={`chip-choice-btn ${form.timeline === t.label ? 'choice-active' : ''}`}
+                              style={{
+                                backgroundColor: form.timeline === t.label ? themeStyles.accentOrangeSoft : (isDarkMode ? '#070d1e' : '#ffffff'),
+                                borderColor: form.timeline === t.label ? themeStyles.accentOrange : themeStyles.borderColor,
+                                color: form.timeline === t.label ? themeStyles.accentOrange : themeStyles.textPrimary
+                              }}
+                              onClick={() => setForm((f) => ({ ...f, timeline: t.label }))}
+                            >
+                              {form.timeline === t.label && <Check size={12} />} {t.label}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Custom Requirements / GST Details */}
+                      <div className="form-field">
+                        <label className="field-label" style={{ color: themeStyles.textSecondary }}>
+                          <FileText size={13} /> Specific Requirements / GST Details (Optional)
+                        </label>
+                        <textarea
+                          name="message"
+                          rows={3}
+                          value={form.message}
+                          onChange={handleFormChange}
+                          placeholder="Mention GST identification number, custom OS requirements, extended warranty, or phased shipping..."
+                          className="field-textarea"
+                          style={{
+                            backgroundColor: themeStyles.inputBg,
+                            borderColor: themeStyles.borderColor,
+                            color: themeStyles.textPrimary
+                          }}
+                        />
+                      </div>
+
+                      {/* Summary overview box */}
+                      <div className="rfq-summary-box" style={{ backgroundColor: themeStyles.subCardBg, borderColor: themeStyles.borderColor }}>
+                        <div className="summary-row">
+                          <span style={{ color: themeStyles.textSecondary }}>Selected Instruments:</span>
+                          <strong>{quoteItems.length} Products</strong>
+                        </div>
+                        <div className="summary-row">
+                          <span style={{ color: themeStyles.textSecondary }}>Total Units:</span>
+                          <strong>{totalUnits} Units</strong>
+                        </div>
+                        <div className="summary-row">
+                          <span style={{ color: themeStyles.textSecondary }}>Commercial Rate:</span>
+                          <strong style={{ color: themeStyles.accentOrange }}>Wholesale RFQ Quote</strong>
+                        </div>
+                      </div>
+
+                      {/* Submit RFQ Button */}
+                      <button
+                        type="submit"
+                        disabled={submitting || quoteItems.length === 0}
+                        className="btn-submit-rfq"
+                      >
+                        {submitting ? (
+                          <span>Generating Official RFQ...</span>
                         ) : (
-                          <div className="item-footer-row">
-                            <div className="item-qty-wrap">
-                              <span className="item-qty-label">Qty:</span>
-                              <div className="qty-controls">
-                                <button
-                                  type="button"
-                                  className="qty-btn"
-                                  onClick={() => handleVariantQtyChange(item.uid, selectedVars[0]?.variantId, -1)}
-                                >
-                                  −
-                                </button>
-                                <input
-                                  type="number"
-                                  className="qty-input"
-                                  min="1"
-                                  value={selectedVars[0]?.quantity}
-                                  onChange={(e) => handleVariantQtyInput(item.uid, selectedVars[0]?.variantId, e.target.value)}
-                                  onBlur={() => handleVariantQtyBlur(item.uid, selectedVars[0]?.variantId)}
-                                />
-                                <button
-                                  type="button"
-                                  className="qty-btn"
-                                  onClick={() => handleVariantQtyChange(item.uid, selectedVars[0]?.variantId, 1)}
-                                >
-                                  +
-                                </button>
-                              </div>
-                            </div>
-
-                            <div className="item-subtotal-box">
-                              <span className="subtotal-label">Subtotal:</span>
-                              <strong className="subtotal-amount">₹{itemSubtotal.toLocaleString('en-IN')}</strong>
-                            </div>
-                          </div>
+                          <>
+                            <span>Submit Official Quotation Request</span>
+                            <ArrowRight size={18} />
+                          </>
                         )}
+                      </button>
+
+                      <p className="privacy-note" style={{ color: themeStyles.textSecondary }}>
+                        🔒 Official Bharat Devices quotation with GST invoice breakdown will be dispatched directly to your business email.
+                      </p>
+                    </form>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+      </div>
+
+      {/* CATALOG PICKER MODAL */}
+      {isPickerOpen && (
+        <div className="picker-overlay" onClick={() => setIsPickerOpen(false)}>
+          <div
+            className="picker-modal"
+            style={{
+              backgroundColor: themeStyles.cardBg,
+              borderColor: themeStyles.borderColor,
+              color: themeStyles.textPrimary
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div className="picker-header" style={{ borderBottomColor: themeStyles.borderColor }}>
+              <div>
+                <h3 className="picker-title" style={{ color: themeStyles.textPrimary }}>Add Instruments from Catalog</h3>
+                <span className="picker-sub" style={{ color: themeStyles.textSecondary }}>
+                  Select from {products.length} enterprise-ready hardware devices
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsPickerOpen(false)}
+                className="btn-close-picker"
+                style={{ color: themeStyles.textSecondary }}
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            {/* Modal Search & Filters */}
+            <div className="picker-filter-bar" style={{ borderBottomColor: themeStyles.borderColor }}>
+              <div className="picker-search-wrap" style={{ backgroundColor: themeStyles.inputBg, borderColor: themeStyles.borderColor }}>
+                <Search size={15} color={themeStyles.textSecondary} />
+                <input
+                  type="text"
+                  placeholder="Search by product name, model, brand..."
+                  value={pickerSearch}
+                  onChange={(e) => setPickerSearch(e.target.value)}
+                  className="picker-search-input"
+                  style={{ color: themeStyles.textPrimary }}
+                />
+                {pickerSearch && (
+                  <button type="button" onClick={() => setPickerSearch('')} className="btn-clear-search">
+                    <X size={13} />
+                  </button>
+                )}
+              </div>
+
+              {/* Category Pills */}
+              <div className="picker-cats-scroll">
+                {pickerCategories.map((cat) => (
+                  <button
+                    key={cat}
+                    type="button"
+                    onClick={() => setPickerCategory(cat)}
+                    className={`picker-cat-pill ${pickerCategory === cat ? 'active' : ''}`}
+                    style={{
+                      borderColor: pickerCategory === cat ? themeStyles.accentOrange : themeStyles.borderColor,
+                      backgroundColor: pickerCategory === cat ? themeStyles.accentOrange : (isDarkMode ? '#070d1e' : '#f1f5f9'),
+                      color: pickerCategory === cat ? '#ffffff' : themeStyles.textSecondary
+                    }}
+                  >
+                    {cat}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Modal Grid */}
+            <div className="picker-body">
+              {filteredProducts.length === 0 ? (
+                <div className="picker-empty" style={{ color: themeStyles.textSecondary }}>
+                  <Package size={32} />
+                  <span>No products found matching your search.</span>
+                </div>
+              ) : (
+                <div className="picker-grid">
+                  {filteredProducts.map((p) => {
+                    const alreadyInQuote = quoteItems.some((it) => it.productId === p.id);
+                    return (
+                      <div
+                        key={p.id}
+                        className="picker-product-card"
+                        style={{
+                          backgroundColor: themeStyles.subCardBg,
+                          borderColor: themeStyles.borderColor
+                        }}
+                      >
+                        <img src={p.image} alt={p.name} className="picker-thumb" />
+                        <div className="picker-info">
+                          <div className="picker-badge-row">
+                            {p.brand && <span className="brand-pill-sm">{p.brand}</span>}
+                            <span className="cat-pill-sm" style={{ color: themeStyles.textSecondary }}>{p.category}</span>
+                          </div>
+                          <h4 className="picker-name" style={{ color: themeStyles.textPrimary }}>{p.name}</h4>
+
+                          <button
+                            type="button"
+                            onClick={() => addProductToQuote(p)}
+                            className={`btn-picker-add ${alreadyInQuote ? 'btn-added' : ''}`}
+                          >
+                            {alreadyInQuote ? (
+                              <>
+                                <Check size={13} /> Add Another
+                              </>
+                            ) : (
+                              <>
+                                <Plus size={13} /> Add to RFQ
+                              </>
+                            )}
+                          </button>
+                        </div>
                       </div>
                     );
                   })}
                 </div>
               )}
-
-              {/* Dynamic Quotation Summary Card */}
-              {quoteItems.length > 0 && (
-                <div className="quote-summary-card">
-                  <div className="summary-title-row">
-                    <span className="summary-title">Commercial Quotation Summary</span>
-                    <span className="summary-badge">Official Pricing</span>
-                  </div>
-
-                  <div className="summary-line">
-                    <span>Instruments Selected:</span>
-                    <strong>{quoteItems.length} Products</strong>
-                  </div>
-                  <div className="summary-line">
-                    <span>Total Quantity:</span>
-                    <strong>{totalUnits} Units</strong>
-                  </div>
-
-                  <div className="summary-divider" />
-
-                  <div className="summary-total-row">
-                    <span>Estimated Total Quote:</span>
-                    <span className="summary-grand-total">₹{grandTotal.toLocaleString('en-IN')}</span>
-                  </div>
-
-                  <p className="summary-note">
-                    ✓ Official quotation reflecting this specification & price will be provided in email response.
-                  </p>
-                </div>
-              )}
             </div>
 
-            {/* ─── RIGHT COLUMN: CUSTOMER & DELIVERY INFORMATION ─── */}
-            <div className="quote-form-col">
-              <h2 className="section-title">Delivery & Contact Details</h2>
-              <p className="section-subtitle">Enter your organization details to receive the official commercial quotation.</p>
-
-              <form className="quote-form" onSubmit={handleSubmit}>
-                <div className="form-two-col">
-                  <div className="form-group">
-                    <label className="form-label">Full Name <span className="req">*</span></label>
-                    <input
-                      name="name"
-                      value={form.name}
-                      onChange={handleFormChange}
-                      placeholder="e.g. Rahul Sharma"
-                      required
-                      className="form-input"
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label className="form-label">Company / Organization <span className="req">*</span></label>
-                    <input
-                      name="company"
-                      value={form.company}
-                      onChange={handleFormChange}
-                      placeholder="e.g. Acme Tech Solutions"
-                      required
-                      className="form-input"
-                    />
-                  </div>
-                </div>
-
-                <div className="form-two-col">
-                  <div className="form-group">
-                    <label className="form-label">Work Email <span className="req">*</span></label>
-                    <input
-                      name="email"
-                      type="email"
-                      value={form.email}
-                      onChange={handleFormChange}
-                      placeholder="name@company.com"
-                      required
-                      className="form-input"
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label className="form-label">Phone Number <span className="req">*</span></label>
-                    <input
-                      name="phone"
-                      value={form.phone}
-                      onChange={handleFormChange}
-                      placeholder="+91 98765 43210"
-                      required
-                      className="form-input"
-                    />
-                  </div>
-                </div>
-
-                <div className="form-group">
-                  <label className="form-label">Delivery Location / City <span className="req">*</span></label>
-                  <input
-                    name="delivery"
-                    value={form.delivery}
-                    onChange={handleFormChange}
-                    placeholder="e.g. Bandra-Kurla Complex (BKC), Mumbai"
-                    required
-                    className="form-input"
-                  />
-                </div>
-
-                <div className="form-group">
-                  <label className="form-label">Custom Requirements / Notes (Optional)</label>
-                  <textarea
-                    name="message"
-                    value={form.message}
-                    onChange={handleFormChange}
-                    placeholder="Specify warranty duration, GST invoice details, delivery timeline, or technical accessories..."
-                    rows={3}
-                    className="form-input form-textarea"
-                  />
-                </div>
-
-                {submitError && (
-                  <div className="submit-error-banner">
-                    <span>{submitError}</span>
-                  </div>
-                )}
-
-                <button
-                  type="submit"
-                  className="btn-submit-quote"
-                  disabled={submitting || quoteItems.length === 0}
-                >
-                  {submitting
-                    ? 'Submitting Request...'
-                    : `Submit Quotation Request (${quoteItems.length} Products · ₹${grandTotal.toLocaleString('en-IN')}) →`}
-                </button>
-
-                <p className="privacy-note">
-                  🔒 Your details are securely encrypted and used strictly for commercial quotation purposes.
-                </p>
-              </form>
+            {/* Modal Footer */}
+            <div className="picker-footer" style={{ borderTopColor: themeStyles.borderColor }}>
+              <span className="footer-count" style={{ color: themeStyles.textSecondary }}>
+                {quoteItems.length} {quoteItems.length === 1 ? 'item' : 'items'} currently in quote
+              </span>
+              <button
+                type="button"
+                onClick={() => setIsPickerOpen(false)}
+                className="btn-picker-done"
+              >
+                Done Adding
+              </button>
             </div>
           </div>
-        )}
+        </div>
+      )}
 
-        {/* ─── PRODUCT CATALOG PICKER MODAL (Add More Products) ─── */}
-        {isPickerOpen && (
-          <div className="modal-backdrop" onClick={() => setIsPickerOpen(false)}>
-            <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-              <div className="modal-header">
-                <div>
-                  <h3 className="modal-title">Select Instruments to Add</h3>
-                  <span className="modal-sub">Add multiple products to generate a combined quotation</span>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setIsPickerOpen(false)}
-                  className="modal-close-btn"
-                >
-                  ✕
-                </button>
-              </div>
-
-              {/* Search input */}
-              <div className="modal-search-wrap">
-                <input
-                  type="text"
-                  placeholder="Search available devices..."
-                  value={pickerSearch}
-                  onChange={(e) => setPickerSearch(e.target.value)}
-                  className="modal-search-input"
-                  autoFocus
-                />
-              </div>
-
-              {/* Products list */}
-              <div className="modal-products-grid">
-                {loading ? (
-                  <div style={{ textAlign: 'center', padding: '30px', color: '#94a3b8' }}>
-                    Loading available devices...
-                  </div>
-                ) : filteredPickerProducts.length === 0 ? (
-                  <div style={{ textAlign: 'center', padding: '30px', color: '#94a3b8' }}>
-                    No products found matching "{pickerSearch}".
-                  </div>
-                ) : (
-                  filteredPickerProducts.map((p) => {
-                    const isAlreadyAdded = quoteItems.some((it) => String(it.productId) === String(p.id));
-                    return (
-                      <div key={p.id} className="picker-product-card">
-                        <img src={p.image} alt={p.name} className="picker-img" />
-                        <div className="picker-info">
-                          <h4 className="picker-name">{p.name}</h4>
-                          <span className="picker-cat">{p.category}</span>
-                          <span className="picker-price">
-                            {p.price > 0 ? `₹${p.price.toLocaleString('en-IN')} onwards` : 'System Pricing'}
-                          </span>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => addProductToQuote(p)}
-                          className={`btn-picker-add ${isAlreadyAdded ? 'added' : ''}`}
-                        >
-                          {isAlreadyAdded ? '+ Add More' : '+ Add to Quote'}
-                        </button>
-                      </div>
-                    );
-                  })
-                )}
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
+      {/* Floating Action Button: Contact Info in right corner */}
+      {step === 1 && (
+        <button
+          type="button"
+          onClick={() => setIsDetailsOpen(true)}
+          className="floating-contact-btn"
+          title="Open Contact Info & Organization Details"
+        >
+          <User size={18} />
+          <span>Contact Info</span>
+        </button>
+      )}
 
       <style>{`
+        /* ── Base Page ── */
         .enquiry-page {
-          background: radial-gradient(circle at 50% 0%, #0d1a33 0%, #070d1e 60%, #040814 100%);
           min-height: 100vh;
-          padding: 2.5rem 1.25rem 4rem;
-          color: #f8fafc;
-          font-family: 'Inter', system-ui, -apple-system, sans-serif;
+          padding: 2.5rem 1.5rem 5rem;
+          font-family: inherit;
+          transition: background-color 0.2s;
         }
 
         .enquiry-container {
-          max-width: 1140px;
+          max-width: 1280px;
           margin: 0 auto;
+          display: flex;
+          flex-direction: column;
+          height: calc(100vh - 100px);
+          max-height: calc(100vh - 100px);
+          overflow: hidden;
+        }
+
+        .enquiry-container.step-confirmation-active {
+          height: auto;
+          max-height: none;
+          min-height: calc(100vh - 100px);
+          overflow-y: visible;
+          padding-bottom: 3.5rem;
         }
 
         /* ── Header ── */
-        .enquiry-header {
-          text-align: center;
-          margin-bottom: 2rem;
+        .enquiry-header-row {
+          display: flex;
+          align-items: flex-start;
+          justify-content: space-between;
+          margin-bottom: 0.85rem;
+          gap: 1.5rem;
+          flex-shrink: 0;
         }
 
-        .enquiry-badge {
-          display: inline-block;
-          font-size: 11px;
+        .portal-badge {
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          font-size: 0.75rem;
           font-weight: 700;
           text-transform: uppercase;
           letter-spacing: 0.05em;
-          padding: 4px 12px;
+          padding: 4px 10px;
           border-radius: 999px;
-          background: rgba(249, 115, 22, 0.12);
-          border: 1px solid rgba(249, 115, 22, 0.3);
-          color: #fb923c;
-          margin-bottom: 0.6rem;
+          margin-bottom: 0.35rem;
         }
 
-        .enquiry-title {
-          font-size: 1.85rem;
+        .portal-title {
+          font-size: clamp(1.4rem, 2.5vw, 1.85rem);
           font-weight: 800;
-          color: #ffffff;
-          margin: 0 0 0.4rem;
           letter-spacing: -0.02em;
+          margin: 0 0 0.35rem;
+          line-height: 1.2;
         }
 
-        .enquiry-desc {
-          color: #94a3b8;
-          font-size: 0.88rem;
-          max-width: 600px;
-          margin: 0 auto;
+        .portal-subtitle {
+          font-size: 0.85rem;
           line-height: 1.5;
+          margin: 0;
+          max-width: 760px;
         }
 
-        /* ── 2-Column Grid Layout ── */
-        .quote-grid-layout {
-          display: grid;
-          grid-template-columns: minmax(360px, 460px) 1fr;
-          gap: 1.5rem;
-          align-items: start;
-        }
-
-        /* ── Left Column (Quote Items) ── */
-        .quote-items-col {
+        /* ── Full Width Instruments Section ── */
+        .rfq-full-width-layout {
+          width: 100%;
+          flex: 1;
+          min-height: 0;
           display: flex;
           flex-direction: column;
-          gap: 1rem;
+          overflow: hidden;
         }
 
-        .section-header-row {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          padding-bottom: 0.4rem;
-          border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-        }
-
-        .section-title {
-          font-size: 1.1rem;
-          font-weight: 700;
-          color: #ffffff;
-          margin: 0;
-        }
-
-        .section-subtitle {
-          font-size: 0.78rem;
-          color: #94a3b8;
-          display: block;
-          margin-top: 2px;
-        }
-
-        .btn-add-product {
-          background: rgba(249, 115, 22, 0.12);
-          border: 1px solid rgba(249, 115, 22, 0.35);
-          color: #fb923c;
-          padding: 6px 14px;
-          border-radius: 6px;
-          font-size: 0.82rem;
-          font-weight: 700;
-          cursor: pointer;
-          transition: all 0.2s;
-        }
-
-        .btn-add-product:hover {
-          background: #f97316;
-          color: #ffffff;
-          border-color: #f97316;
-        }
-
-        /* Empty State */
-        .empty-quote-state {
-          background: rgba(15, 23, 42, 0.6);
-          border: 1px dashed rgba(255, 255, 255, 0.15);
-          border-radius: 12px;
-          padding: 2.5rem 1.5rem;
-          text-align: center;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          gap: 0.6rem;
-        }
-
-        .empty-icon {
-          width: 48px;
-          height: 48px;
-          border-radius: 50%;
-          background: rgba(255, 255, 255, 0.05);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          margin-bottom: 0.3rem;
-        }
-
-        .empty-quote-state h3 {
-          font-size: 0.95rem;
-          font-weight: 700;
-          color: #e2e8f0;
-          margin: 0;
-        }
-
-        .empty-quote-state p {
-          font-size: 0.8rem;
-          color: #94a3b8;
-          margin: 0;
-          max-width: 280px;
-        }
-
-        .btn-browse-catalog {
-          margin-top: 0.5rem;
-          background: #f97316;
-          color: #ffffff;
-          border: none;
-          padding: 8px 18px;
-          border-radius: 6px;
-          font-size: 0.84rem;
-          font-weight: 700;
-          cursor: pointer;
-        }
-
-        /* Items List */
-        .quote-items-list {
+        .rfq-main-col {
+          width: 100%;
+          flex: 1;
+          min-height: 0;
           display: flex;
           flex-direction: column;
           gap: 0.85rem;
-          max-height: 580px;
-          overflow-y: auto;
-          padding-right: 4px;
+          overflow: hidden;
         }
 
-        .quote-item-card {
-          background: rgba(15, 23, 42, 0.7);
-          border: 1px solid rgba(255, 255, 255, 0.12);
-          border-radius: 10px;
-          padding: 12px;
-          display: flex;
-          flex-direction: column;
-          gap: 10px;
-          transition: border-color 0.2s;
-          position: relative;
-        }
-
-        .quote-item-card:hover {
-          border-color: rgba(249, 115, 22, 0.4);
-        }
-
-        .quote-item-card.card-dropdown-active {
-          border-color: rgba(249, 115, 22, 0.7);
-          z-index: 50;
-        }
-
-        .item-header-row {
+        .col-header-bar {
+          border-radius: 14px;
+          padding: 0.85rem 1.4rem;
+          border: 1px solid;
           display: flex;
           align-items: center;
-          gap: 10px;
-        }
-
-        .item-thumb {
-          width: 50px;
-          height: 50px;
-          border-radius: 6px;
-          object-fit: cover;
-          background: rgba(0, 0, 0, 0.2);
-          border: 1px solid rgba(255, 255, 255, 0.1);
+          justify-content: space-between;
+          flex-wrap: wrap;
+          gap: 0.85rem;
           flex-shrink: 0;
         }
 
-        .item-meta {
+        /* ── Scrollable Instruments in Quote Container ── */
+        .instruments-scroll-wrap {
           flex: 1;
-          min-width: 0;
+          min-height: 0;
+          overflow-y: auto;
+          overflow-x: hidden;
+          padding-right: 6px;
+          -webkit-overflow-scrolling: touch;
+          scroll-behavior: smooth;
         }
 
-        .item-title {
-          font-size: 0.88rem;
-          font-weight: 700;
-          color: #ffffff;
-          margin: 0;
-          white-space: nowrap;
-          overflow: hidden;
-          text-overflow: ellipsis;
+        .instruments-scroll-wrap::-webkit-scrollbar {
+          width: 6px;
         }
 
-        .item-cat {
-          font-size: 0.72rem;
-          color: #94a3b8;
-          display: block;
-          margin-top: 2px;
+        .instruments-scroll-wrap::-webkit-scrollbar-track {
+          background: transparent;
         }
 
-        .btn-remove-item {
-          background: none;
-          border: none;
-          color: #64748b;
-          font-size: 13px;
-          cursor: pointer;
-          padding: 4px;
-          border-radius: 4px;
-          line-height: 1;
-        }
-
-        .btn-remove-item:hover {
-          color: #ef4444;
-          background: rgba(239, 68, 68, 0.1);
-        }
-
-        .item-spec-box {
-          display: flex;
-          flex-direction: column;
-          gap: 5px;
-        }
-
-        .spec-label-row {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-        }
-
-        .item-field-label {
-          font-size: 0.72rem;
-          font-weight: 600;
-          color: #cbd5e1;
-          text-transform: uppercase;
-          letter-spacing: 0.03em;
-        }
-
-        .spec-count-tag {
-          font-size: 0.68rem;
-          font-weight: 700;
-          color: #fb923c;
-          background: rgba(249, 115, 22, 0.12);
-          border: 1px solid rgba(249, 115, 22, 0.3);
-          padding: 1px 6px;
+        .instruments-scroll-wrap::-webkit-scrollbar-thumb {
+          background: #cbd5e1;
           border-radius: 4px;
         }
 
-        /* ── Multi-Specification Dropdown Selector ── */
-        .spec-dropdown-container {
-          position: relative;
-          width: 100%;
+        .instruments-scroll-wrap:hover::-webkit-scrollbar-thumb {
+          background: #94a3b8;
         }
 
-        .spec-dropdown-trigger {
-          width: 100%;
-          background: #0b1428;
-          border: 1px solid rgba(255, 255, 255, 0.16);
-          border-radius: 6px;
-          padding: 7px 10px;
-          color: #ffffff;
-          font-size: 0.8rem;
-          font-family: inherit;
-          outline: none;
-          cursor: pointer;
-          transition: all 0.2s;
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          gap: 8px;
-          text-align: left;
+        html.dark .instruments-scroll-wrap::-webkit-scrollbar-thumb {
+          background: #192b50;
         }
 
-        .spec-dropdown-trigger:hover,
-        .spec-dropdown-trigger.open {
-          border-color: #f97316;
-          background: #0e1a35;
+        html.dark .instruments-scroll-wrap:hover::-webkit-scrollbar-thumb {
+          background: #334e68;
         }
 
-        .spec-trigger-left {
-          flex: 1;
-          min-width: 0;
-          display: flex;
-          align-items: center;
-        }
-
-        .multi-tag-display {
-          display: flex;
-          align-items: center;
-          gap: 6px;
-          min-width: 0;
-          overflow: hidden;
-        }
-
-        .multi-count-pill {
-          background: #ea580c;
-          color: #ffffff;
-          font-size: 0.65rem;
+        .col-title {
+          font-size: 1.15rem;
           font-weight: 800;
-          padding: 2px 6px;
-          border-radius: 4px;
-          flex-shrink: 0;
+          margin: 0;
         }
 
-        .multi-summary-text {
-          font-size: 0.78rem;
-          font-weight: 600;
-          color: #fed7aa;
-          white-space: nowrap;
-          overflow: hidden;
-          text-overflow: ellipsis;
-        }
-
-        .single-spec-display {
-          display: flex;
-          align-items: center;
-          gap: 6px;
-          min-width: 0;
-          white-space: nowrap;
-          overflow: hidden;
-          text-overflow: ellipsis;
-        }
-
-        .single-spec-title {
+        .col-subtitle {
           font-size: 0.8rem;
           font-weight: 600;
-          color: #f8fafc;
-          white-space: nowrap;
-          overflow: hidden;
-          text-overflow: ellipsis;
-        }
-
-        .single-spec-price-tag {
-          font-size: 0.78rem;
-          color: #fb923c;
-          font-weight: 700;
-          flex-shrink: 0;
-        }
-
-        .dropdown-chevron {
-          font-size: 0.65rem;
-          color: #94a3b8;
-          transition: transform 0.2s ease;
-          display: inline-block;
-        }
-
-        .dropdown-chevron.rotated {
-          transform: rotate(180deg);
-          color: #f97316;
-        }
-
-        /* ── Floating Dropdown Menu ── */
-        .spec-dropdown-menu {
-          position: absolute;
-          top: calc(100% + 4px);
-          left: 0;
-          right: 0;
-          background: #081126;
-          border: 1.5px solid #f97316;
-          border-radius: 8px;
-          box-shadow: 0 12px 28px rgba(0, 0, 0, 0.75);
-          z-index: 100;
-          display: flex;
-          flex-direction: column;
-          overflow: hidden;
-          animation: specMenuIn 0.15s ease-out;
-        }
-
-        @keyframes specMenuIn {
-          from { opacity: 0; transform: translateY(-4px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-
-        .spec-dropdown-header {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          padding: 8px 10px;
-          background: rgba(255, 255, 255, 0.04);
-          border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-        }
-
-        .menu-header-title {
-          font-size: 0.76rem;
-          font-weight: 700;
-          color: #ffffff;
+          margin-top: 3px;
           display: block;
         }
 
-        .menu-header-hint {
-          font-size: 0.66rem;
-          color: #94a3b8;
-          display: block;
-        }
-
-        .spec-btn-action {
-          background: rgba(249, 115, 22, 0.15);
-          border: 1px solid rgba(249, 115, 22, 0.4);
-          color: #fb923c;
-          font-size: 0.68rem;
-          font-weight: 700;
-          border-radius: 4px;
-          padding: 3px 8px;
-          cursor: pointer;
-          transition: all 0.15s;
-        }
-
-        .spec-btn-action:hover {
-          background: #ea580c;
-          color: #ffffff;
-        }
-
-        .spec-options-scroll {
-          max-height: 200px;
-          overflow-y: auto;
-          padding: 5px;
-          display: flex;
-          flex-direction: column;
-          gap: 3px;
-        }
-
-        .spec-option-row {
+        .col-header-actions {
           display: flex;
           align-items: center;
-          gap: 10px;
-          padding: 7px 9px;
-          border-radius: 6px;
-          cursor: pointer;
-          transition: background 0.15s;
-          user-select: none;
-        }
-
-        .spec-option-row:hover {
-          background: rgba(255, 255, 255, 0.07);
-        }
-
-        .spec-option-row.selected {
-          background: rgba(249, 115, 22, 0.14);
-        }
-
-        .spec-custom-checkbox {
-          width: 17px;
-          height: 17px;
-          border-radius: 4px;
-          border: 1.5px solid rgba(255, 255, 255, 0.35);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-size: 11px;
-          font-weight: 900;
-          color: #ffffff;
-          flex-shrink: 0;
-          transition: all 0.15s;
-        }
-
-        .spec-custom-checkbox.checked {
-          background: #ea580c;
-          border-color: #ea580c;
-        }
-
-        .spec-option-info {
-          flex: 1;
-          min-width: 0;
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          gap: 6px;
-        }
-
-        .spec-option-name {
-          font-size: 0.77rem;
-          color: #ffffff;
-          font-weight: 500;
-        }
-
-        .spec-option-cost {
-          font-size: 0.75rem;
-          color: #fb923c;
-          font-weight: 700;
-          white-space: nowrap;
-        }
-
-        .spec-dropdown-footer {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          padding: 6px 10px;
-          background: rgba(0, 0, 0, 0.3);
-          border-top: 1px solid rgba(255, 255, 255, 0.08);
-        }
-
-        .footer-notice {
-          font-size: 0.68rem;
-          color: #94a3b8;
-          font-weight: 500;
-        }
-
-        .spec-btn-done {
-          background: #ea580c;
-          color: #ffffff;
-          border: none;
-          border-radius: 4px;
-          padding: 4px 10px;
-          font-size: 0.72rem;
-          font-weight: 700;
-          cursor: pointer;
-          transition: background 0.15s;
-        }
-
-        .spec-btn-done:hover {
-          background: #f97316;
-        }
-
-        /* ── Multi-Variants Itemized List ── */
-        .item-variants-list-wrap {
-          display: flex;
-          flex-direction: column;
-          gap: 6px;
-          margin-top: 2px;
-        }
-
-        .variants-list-head {
-          font-size: 0.7rem;
-          font-weight: 700;
-          color: #cbd5e1;
-          text-transform: uppercase;
-          letter-spacing: 0.03em;
-        }
-
-        .variants-list {
-          display: flex;
-          flex-direction: column;
-          gap: 6px;
-        }
-
-        .variant-line-item {
-          background: rgba(255, 255, 255, 0.04);
-          border: 1px solid rgba(255, 255, 255, 0.1);
-          border-radius: 6px;
-          padding: 7px 9px;
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          gap: 8px;
+          gap: 0.75rem;
           flex-wrap: wrap;
         }
 
-        .variant-line-meta {
-          flex: 1;
-          min-width: 140px;
-          display: flex;
-          flex-direction: column;
-          gap: 1px;
-        }
-
-        .variant-line-label {
-          font-size: 0.77rem;
-          font-weight: 600;
+        .btn-open-picker {
+          background: #F97316;
           color: #ffffff;
-        }
-
-        .variant-line-unit-rate {
-          font-size: 0.7rem;
-          color: #94a3b8;
-        }
-
-        .variant-line-actions {
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          flex-shrink: 0;
-        }
-
-        .variant-line-subtotal {
-          font-size: 0.82rem;
-          font-weight: 800;
-          color: #fb923c;
-          min-width: 65px;
-          text-align: right;
-        }
-
-        .btn-del-variant {
-          background: none;
           border: none;
-          color: #64748b;
-          font-size: 12px;
+          padding: 0.6rem 1.2rem;
+          border-radius: 8px;
+          font-size: 0.84rem;
+          font-weight: 700;
           cursor: pointer;
-          padding: 2px 4px;
-          border-radius: 4px;
-          line-height: 1;
-        }
-
-        .btn-del-variant:hover {
-          color: #ef4444;
-          background: rgba(239, 68, 68, 0.15);
-        }
-
-        .product-total-bar {
-          margin-top: 2px;
-          padding-top: 6px;
-          border-top: 1px dashed rgba(255, 255, 255, 0.12);
-        }
-
-        .product-total-label {
-          font-size: 0.74rem;
-          color: #94a3b8;
-          font-weight: 600;
-        }
-
-        .product-total-amount {
-          font-size: 0.86rem;
-          color: #fb923c;
-          font-weight: 800;
-        }
-
-        .item-footer-row {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          padding-top: 6px;
-          border-top: 1px solid rgba(255, 255, 255, 0.06);
-        }
-
-        .item-qty-wrap {
-          display: flex;
+          display: inline-flex;
           align-items: center;
           gap: 6px;
+          transition: background 0.18s, transform 0.15s;
         }
 
-        .item-qty-label {
-          font-size: 0.74rem;
-          color: #94a3b8;
+        .btn-open-picker:hover {
+          background: #ea580c;
+          transform: translateY(-1px);
         }
 
-        .qty-controls {
-          display: flex;
-          align-items: center;
-          background: rgba(255, 255, 255, 0.06);
-          border: 1px solid rgba(255, 255, 255, 0.18);
-          border-radius: 6px;
-          overflow: hidden;
-        }
-
-        .qty-btn {
-          background: none;
-          border: none;
+        /* Prominent Collapsible Drawer Trigger Button */
+        .btn-trigger-drawer {
+          background: linear-gradient(135deg, #10b981, #059669);
           color: #ffffff;
-          font-size: 14px;
-          width: 24px;
-          height: 24px;
+          border: none;
+          padding: 0.6rem 1.35rem;
+          border-radius: 8px;
+          font-size: 0.84rem;
+          font-weight: 700;
+          cursor: pointer;
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+          box-shadow: 0 3px 12px rgba(16, 185, 129, 0.28);
+          transition: all 0.2s ease;
+        }
+
+        .btn-trigger-drawer:hover {
+          background: linear-gradient(135deg, #059669, #047857);
+          transform: translateY(-1px);
+          box-shadow: 0 5px 16px rgba(16, 185, 129, 0.4);
+        }
+
+        .drawer-arrow-icon {
+          transition: transform 0.2s ease;
+        }
+
+        .btn-trigger-drawer:hover .drawer-arrow-icon {
+          transform: translateX(3px);
+        }
+
+        /* ── Empty State ── */
+        .empty-rfq-card {
+          border-radius: 14px;
+          padding: 3.5rem 1.5rem;
+          border: 1px dashed;
+          text-align: center;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+        }
+
+        .empty-icon-wrap {
+          width: 72px;
+          height: 72px;
+          border-radius: 18px;
           display: flex;
           align-items: center;
           justify-content: center;
-          cursor: pointer;
+          margin-bottom: 0.5rem;
         }
 
-        .qty-btn:hover {
-          background: rgba(255, 255, 255, 0.1);
-        }
-
-        .qty-input {
-          width: 36px;
-          text-align: center;
-          background: transparent;
-          border: none;
+        .btn-browse-catalog-primary {
+          background: #F97316;
           color: #ffffff;
-          font-size: 0.8rem;
-          font-weight: 700;
-          outline: none;
-          padding: 0;
-        }
-
-        .item-subtotal-box {
-          display: flex;
-          align-items: center;
-          gap: 6px;
-        }
-
-        .subtotal-label {
-          font-size: 0.74rem;
-          color: #94a3b8;
-        }
-
-        .subtotal-amount {
+          border: none;
+          padding: 0.75rem 1.75rem;
+          border-radius: 9px;
           font-size: 0.88rem;
-          color: #fb923c;
           font-weight: 700;
+          cursor: pointer;
+          display: inline-flex;
+          align-items: center;
+          gap: 7px;
+          transition: background 0.18s;
         }
 
-        /* Summary Card */
-        .quote-summary-card {
-          background: rgba(11, 20, 40, 0.85);
-          border: 1px solid rgba(249, 115, 22, 0.3);
-          border-radius: 10px;
-          padding: 14px;
+        .btn-browse-catalog-primary:hover {
+          background: #ea580c;
+        }
+
+        /* ── Quote Cards Stack ── */
+        .quote-cards-stack {
           display: flex;
           flex-direction: column;
-          gap: 6px;
+          gap: 1.25rem;
         }
 
-        .summary-title-row {
+        .product-quote-card {
+          border-radius: 14px;
+          padding: 1.4rem;
+          border: 1px solid;
           display: flex;
-          justify-content: space-between;
-          align-items: center;
-          margin-bottom: 2px;
+          flex-direction: column;
+          gap: 1.15rem;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+          transition: border-color 0.18s;
         }
 
-        .summary-title {
-          font-size: 0.78rem;
-          font-weight: 700;
-          color: #fb923c;
+        .card-top-row {
+          display: flex;
+          align-items: flex-start;
+          justify-content: space-between;
+          gap: 1rem;
+        }
+
+        .card-product-meta {
+          display: flex;
+          align-items: center;
+          gap: 1.15rem;
+        }
+
+        .product-thumb {
+          width: 72px;
+          height: 72px;
+          border-radius: 10px;
+          object-fit: cover;
+          background: #f1f5f9;
+          flex-shrink: 0;
+          border: 1px solid rgba(0,0,0,0.06);
+        }
+
+        .meta-text {
+          display: flex;
+          flex-direction: column;
+          gap: 0.35rem;
+        }
+
+        .meta-badge-row {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+        }
+
+        .brand-pill {
+          background: #F97316;
+          color: #ffffff;
+          font-size: 0.72rem;
+          font-weight: 800;
+          padding: 2px 8px;
+          border-radius: 4px;
           text-transform: uppercase;
           letter-spacing: 0.04em;
         }
 
-        .summary-badge {
-          font-size: 0.65rem;
+        .cat-pill {
+          font-size: 0.75rem;
+          font-weight: 600;
+          text-transform: capitalize;
+        }
+
+        .product-title {
+          font-size: 1.05rem;
           font-weight: 800;
-          background: rgba(34, 197, 94, 0.15);
-          color: #4ade80;
-          border: 1px solid rgba(34, 197, 94, 0.3);
-          border-radius: 999px;
-          padding: 1px 7px;
-        }
-
-        .summary-line {
-          display: flex;
-          justify-content: space-between;
-          font-size: 0.8rem;
-          color: #cbd5e1;
-        }
-
-        .summary-divider {
-          height: 1px;
-          background: rgba(255, 255, 255, 0.08);
-          margin: 4px 0;
-        }
-
-        .summary-total-row {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          font-size: 0.88rem;
-          font-weight: 700;
-          color: #ffffff;
-        }
-
-        .summary-grand-total {
-          font-size: 1.15rem;
-          font-weight: 800;
-          color: #f97316;
-        }
-
-        .summary-note {
-          margin: 4px 0 0;
-          font-size: 0.7rem;
-          color: #86efac;
+          margin: 0;
           line-height: 1.3;
         }
 
-        /* ── Right Column (Form) ── */
-        .quote-form-col {
-          background: rgba(15, 23, 42, 0.65);
-          border: 1px solid rgba(255, 255, 255, 0.12);
-          border-radius: 12px;
-          padding: 1.5rem;
-          backdrop-filter: blur(12px);
-        }
-
-        .quote-form {
-          display: flex;
-          flex-direction: column;
-          gap: 0.85rem;
-          margin-top: 1rem;
-        }
-
-        .form-two-col {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 0.85rem;
-        }
-
-        .form-group {
-          display: flex;
-          flex-direction: column;
-          gap: 0.3rem;
-        }
-
-        .form-label {
-          font-size: 0.78rem;
-          font-weight: 600;
-          color: #cbd5e1;
-        }
-
-        .req { color: #f87171; }
-
-        .form-input {
-          background: rgba(255, 255, 255, 0.06);
-          border: 1px solid rgba(255, 255, 255, 0.15);
-          border-radius: 6px;
-          padding: 0.6rem 0.8rem;
-          font-size: 0.86rem;
-          color: #ffffff;
-          font-family: inherit;
-          outline: none;
-          transition: all 0.2s;
-        }
-
-        .form-input:focus {
-          border-color: #f97316;
-          background: rgba(255, 255, 255, 0.09);
-        }
-
-        .form-textarea {
-          resize: vertical;
-          min-height: 70px;
-        }
-
-        .btn-submit-quote {
-          background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
-          color: #ffffff;
+        .btn-remove-card {
+          background: transparent;
           border: none;
-          border-radius: 8px;
-          padding: 0.85rem 1rem;
-          font-size: 0.92rem;
-          font-weight: 800;
+          color: #ef4444;
+          opacity: 0.75;
           cursor: pointer;
-          transition: all 0.2s;
-          margin-top: 0.4rem;
-          box-shadow: 0 4px 14px rgba(249, 115, 22, 0.3);
-        }
-
-        .btn-submit-quote:hover:not(:disabled) {
-          transform: translateY(-1px);
-          box-shadow: 0 6px 18px rgba(249, 115, 22, 0.45);
-        }
-
-        .btn-submit-quote:disabled {
-          background: rgba(255, 255, 255, 0.2);
-          color: #64748b;
-          cursor: not-allowed;
-          box-shadow: none;
-        }
-
-        .privacy-note {
-          font-size: 0.72rem;
-          color: #64748b;
-          text-align: center;
-          margin: 0;
-        }
-
-        .submit-error-banner {
-          background: rgba(239, 68, 68, 0.15);
-          border: 1px solid rgba(239, 68, 68, 0.35);
+          padding: 6px;
           border-radius: 6px;
-          padding: 8px 12px;
-          font-size: 0.8rem;
-          color: #fca5a5;
+          transition: all 0.15s;
         }
 
-        /* ── Modal Picker ── */
-        .modal-backdrop {
-          position: fixed;
-          inset: 0;
-          background: rgba(0, 0, 0, 0.75);
-          backdrop-filter: blur(6px);
+        .btn-remove-card:hover {
+          opacity: 1;
+          background: rgba(239, 68, 68, 0.1);
+        }
+
+        /* ── Multi-Specification Pills ── */
+        .spec-section-box {
+          border-radius: 10px;
+          padding: 1rem 1.15rem;
+          border: 1px solid;
+          display: flex;
+          flex-direction: column;
+          gap: 0.75rem;
+        }
+
+        .spec-section-header {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+        }
+
+        .spec-label {
+          font-size: 0.76rem;
+          font-weight: 800;
+          letter-spacing: 0.05em;
+          text-transform: uppercase;
+        }
+
+        .spec-count-tag {
+          font-size: 0.72rem;
+          font-weight: 700;
+          padding: 2px 8px;
+          border-radius: 999px;
+        }
+
+        .spec-pills-row {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 0.55rem;
+        }
+
+        .spec-chip-btn {
+          border-radius: 8px;
+          border: 1.5px solid;
+          padding: 0.5rem 0.95rem;
+          font-size: 0.81rem;
+          font-weight: 700;
+          cursor: pointer;
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+          transition: all 0.15s;
+        }
+
+        .chip-indicator-box {
+          width: 15px;
+          height: 15px;
+          border-radius: 4px;
+          border: 1.5px solid currentColor;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          background: transparent;
+        }
+
+        .chip-indicator-box.box-checked {
+          background: #ffffff;
+          border-color: #ffffff;
+          color: #F97316;
+        }
+
+        .spec-chip-btn:hover {
+          transform: translateY(-1px);
+        }
+
+        .spec-chip-btn.spec-selected {
+          box-shadow: 0 3px 8px rgba(249, 115, 22, 0.28);
+        }
+
+        /* ── Quantity & Notes ── */
+        .card-bottom-row {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 1.25rem;
+          flex-wrap: wrap;
+        }
+
+        .qty-block {
+          display: flex;
+          align-items: center;
+          gap: 0.85rem;
+          flex-wrap: wrap;
+        }
+
+        .qty-label {
+          font-size: 0.8rem;
+          font-weight: 700;
+        }
+
+        .stepper-wrap {
+          display: inline-flex;
+          align-items: center;
+          border-radius: 8px;
+          border: 1px solid;
+          overflow: hidden;
+        }
+
+        .stepper-btn {
+          background: transparent;
+          border: none;
+          width: 32px;
+          height: 32px;
+          font-size: 1rem;
+          font-weight: 700;
+          cursor: pointer;
           display: flex;
           align-items: center;
           justify-content: center;
+        }
+
+        .stepper-btn:hover {
+          background: rgba(0,0,0,0.06);
+        }
+
+        .stepper-input {
+          width: 44px;
+          height: 32px;
+          background: transparent;
+          border: none;
+          text-align: center;
+          font-size: 0.88rem;
+          font-weight: 800;
+          outline: none;
+        }
+
+        .qty-presets {
+          display: flex;
+          align-items: center;
+          gap: 4px;
+        }
+
+        .preset-pill {
+          padding: 3px 8px;
+          border-radius: 5px;
+          border: 1px solid;
+          font-size: 0.72rem;
+          font-weight: 700;
+          cursor: pointer;
+          transition: all 0.15s;
+        }
+
+        .preset-pill:hover {
+          color: #F97316;
+          border-color: #F97316;
+        }
+
+        .item-note-wrap {
+          flex: 1;
+          min-width: 260px;
+        }
+
+        .item-note-input {
+          width: 100%;
+          padding: 0.5rem 0.85rem;
+          border-radius: 7px;
+          border: 1px solid;
+          font-size: 0.8rem;
+          outline: none;
+        }
+
+        .item-note-input:focus {
+          border-color: #F97316 !important;
+        }
+
+        /* Actions below list */
+        .bottom-instruments-actions {
+          display: flex;
+          align-items: center;
+          gap: 1rem;
+          margin-top: 0.5rem;
+        }
+
+        .btn-add-more-dashed {
+          padding: 0.75rem 1.4rem;
+          border-radius: 10px;
+          border: 1.5px dashed;
+          font-size: 0.86rem;
+          font-weight: 700;
+          cursor: pointer;
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+          transition: all 0.15s;
+        }
+
+        .btn-add-more-dashed:hover {
+          border-color: #F97316 !important;
+          background: rgba(249, 115, 22, 0.05) !important;
+        }
+
+        /* ── Collapsible Slide-out Drawer ── */
+        .drawer-overlay {
+          position: fixed;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background: rgba(0, 0, 0, 0.6);
+          backdrop-filter: blur(4px);
           z-index: 1000;
+          display: flex;
+          justify-content: flex-end;
+          animation: fadeIn 0.2s ease;
+        }
+
+        .details-drawer {
+          width: 100%;
+          max-width: 540px;
+          height: 100%;
+          border-left: 1px solid;
+          box-shadow: -8px 0 32px rgba(0, 0, 0, 0.35);
+          display: flex;
+          flex-direction: column;
+          animation: slideInRight 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        @keyframes fadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+
+        @keyframes slideInRight {
+          from { transform: translateX(100%); }
+          to { transform: translateX(0); }
+        }
+
+        .drawer-header {
+          padding: 1.5rem 1.75rem;
+          border-bottom: 1px solid;
+          display: flex;
+          align-items: flex-start;
+          justify-content: space-between;
+          gap: 1rem;
+        }
+
+        .drawer-badge {
+          display: inline-flex;
+          align-items: center;
+          gap: 5px;
+          font-size: 0.72rem;
+          font-weight: 800;
+          letter-spacing: 0.05em;
+          margin-bottom: 0.35rem;
+        }
+
+        .drawer-title {
+          font-size: 1.25rem;
+          font-weight: 800;
+          margin: 0;
+          line-height: 1.3;
+        }
+
+        .drawer-sub {
+          font-size: 0.8rem;
+          margin: 0.25rem 0 0;
+          line-height: 1.45;
+        }
+
+        .btn-drawer-collapse {
+          background: transparent;
+          border: 1px solid;
+          width: 36px;
+          height: 36px;
+          border-radius: 8px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          flex-shrink: 0;
+          transition: all 0.15s;
+        }
+
+        .btn-drawer-collapse:hover {
+          color: #F97316 !important;
+          border-color: #F97316 !important;
+        }
+
+        .drawer-body {
+          flex: 1;
+          overflow-y: auto;
+          padding: 1.5rem 1.75rem;
+          display: flex;
+          flex-direction: column;
+          gap: 1rem;
+        }
+
+        .drawer-form {
+          display: flex;
+          flex-direction: column;
+          gap: 1.15rem;
+        }
+
+        .form-grid-2 {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 1rem;
+        }
+
+        .form-field {
+          display: flex;
+          flex-direction: column;
+          gap: 0.4rem;
+        }
+
+        .field-label {
+          font-size: 0.77rem;
+          font-weight: 700;
+          display: inline-flex;
+          align-items: center;
+          gap: 5px;
+        }
+
+        .field-label .req {
+          color: #ef4444;
+        }
+
+        .field-input {
+          padding: 0.65rem 0.85rem;
+          border-radius: 8px;
+          border: 1px solid;
+          font-size: 0.84rem;
+          outline: none;
+          transition: border-color 0.18s;
+        }
+
+        .field-input:focus {
+          border-color: #F97316 !important;
+        }
+
+        .field-textarea {
+          padding: 0.65rem 0.85rem;
+          border-radius: 8px;
+          border: 1px solid;
+          font-size: 0.84rem;
+          outline: none;
+          resize: vertical;
+          font-family: inherit;
+        }
+
+        .field-textarea:focus {
+          border-color: #F97316 !important;
+        }
+
+        .chip-options-grid {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 0.5rem;
+        }
+
+        .chip-choice-btn {
+          border-radius: 8px;
+          border: 1px solid;
+          padding: 0.55rem 0.75rem;
+          font-size: 0.78rem;
+          font-weight: 600;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 5px;
+          transition: all 0.15s;
+          text-align: center;
+        }
+
+        .rfq-summary-box {
+          border-radius: 10px;
+          padding: 0.85rem 1rem;
+          border: 1px solid;
+          display: flex;
+          flex-direction: column;
+          gap: 0.45rem;
+          font-size: 0.8rem;
+        }
+
+        .summary-row {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+        }
+
+        .btn-submit-rfq {
+          background: #F97316;
+          color: #ffffff;
+          border: none;
+          padding: 0.85rem;
+          border-radius: 10px;
+          font-size: 0.92rem;
+          font-weight: 800;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 8px;
+          box-shadow: 0 4px 14px rgba(249, 115, 22, 0.35);
+          transition: background 0.18s, transform 0.15s;
+        }
+
+        .btn-submit-rfq:hover:not(:disabled) {
+          background: #ea580c;
+          transform: translateY(-1px);
+        }
+
+        .btn-submit-rfq:disabled {
+          opacity: 0.6;
+          cursor: not-allowed;
+        }
+
+        .privacy-note {
+          font-size: 0.73rem;
+          margin: 0;
+          text-align: center;
+          line-height: 1.4;
+        }
+
+        .error-alert {
+          background: rgba(239, 68, 68, 0.15);
+          border: 1px solid #ef4444;
+          color: #ef4444;
+          padding: 0.75rem 1rem;
+          border-radius: 8px;
+          font-size: 0.82rem;
+          font-weight: 600;
+        }
+
+        /* ── Confirmation Card ── */
+        .success-card {
+          border-radius: 16px;
+          padding: 2.5rem 2rem;
+          border: 1px solid;
+          text-align: center;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          max-width: 720px;
+          width: 100%;
+          margin: 0 auto;
+          box-shadow: 0 8px 30px rgba(0,0,0,0.1);
+        }
+
+        .success-icon-wrap {
+          width: 72px;
+          height: 72px;
+          border-radius: 50%;
+          background: #22c55e;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          box-shadow: 0 6px 20px rgba(34, 197, 94, 0.4);
+          margin-bottom: 1.25rem;
+        }
+
+        .success-heading {
+          font-size: 1.5rem;
+          font-weight: 800;
+          margin: 0 0 0.5rem;
+        }
+
+        .success-desc {
+          font-size: 0.9rem;
+          margin: 0 0 1.5rem;
+          max-width: 480px;
+        }
+
+        .tracking-id-card {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          padding: 0.65rem 1.25rem;
+          border-radius: 9px;
+          border: 1px solid;
+          margin-bottom: 1.5rem;
+        }
+
+        .tracking-label {
+          font-size: 0.78rem;
+          font-weight: 600;
+        }
+
+        .tracking-val {
+          font-size: 1.05rem;
+          font-family: monospace;
+          letter-spacing: 0.05em;
+        }
+
+        .copy-btn {
+          background: transparent;
+          border: none;
+          color: #F97316;
+          font-size: 0.78rem;
+          font-weight: 700;
+          cursor: pointer;
+          display: inline-flex;
+          align-items: center;
+          gap: 4px;
+        }
+
+        .summary-list-card {
+          width: 100%;
+          border-radius: 10px;
+          padding: 1.15rem;
+          border: 1px solid;
+          margin-bottom: 1.5rem;
+          text-align: left;
+        }
+
+        .summary-items-list {
+          display: flex;
+          flex-direction: column;
+          gap: 0.65rem;
+          max-height: 250px;
+          overflow-y: auto;
+          padding-right: 6px;
+        }
+
+        .summary-items-list::-webkit-scrollbar {
+          width: 5px;
+        }
+
+        .summary-items-list::-webkit-scrollbar-track {
+          background: transparent;
+        }
+
+        .summary-items-list::-webkit-scrollbar-thumb {
+          background: #cbd5e1;
+          border-radius: 4px;
+        }
+
+        html.dark .summary-items-list::-webkit-scrollbar-thumb {
+          background: #334e68;
+        }
+
+        /* ── Floating Contact Info Button ── */
+        .floating-contact-btn {
+          position: fixed;
+          bottom: 24px;
+          right: 24px;
+          z-index: 999;
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+          background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+          color: #ffffff;
+          border: 1px solid rgba(255, 255, 255, 0.25);
+          border-radius: 9999px;
+          padding: 12px 20px;
+          font-size: 0.88rem;
+          font-weight: 700;
+          cursor: pointer;
+          box-shadow: 0 10px 25px -4px rgba(249, 115, 22, 0.45), 0 4px 6px -2px rgba(0, 0, 0, 0.1);
+          transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s;
+        }
+
+        .floating-contact-btn:hover {
+          transform: translateY(-3px) scale(1.02);
+          box-shadow: 0 14px 28px -4px rgba(249, 115, 22, 0.55), 0 6px 12px -2px rgba(0, 0, 0, 0.15);
+        }
+
+        .floating-contact-btn:active {
+          transform: translateY(0);
+        }
+
+        /* ── Multi-Spec Quantities ── */
+        .spec-quantities-container {
+          display: flex;
+          flex-direction: column;
+          gap: 0.65rem;
+        }
+
+        .spec-quantities-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+          gap: 0.75rem;
+        }
+
+        .spec-quantity-card {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 0.6rem 0.85rem;
+          border-radius: 9px;
+          border: 1px solid;
+          gap: 0.75rem;
+        }
+
+        .spec-qty-title {
+          font-size: 0.82rem;
+          font-weight: 600;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+          flex: 1;
+        }
+
+        .summary-item-row {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding-bottom: 0.65rem;
+          border-bottom: 1px solid;
+          gap: 1rem;
+        }
+
+        .summary-item-row:last-child {
+          border-bottom: none;
+          padding-bottom: 0;
+        }
+
+        .summary-item-left {
+          display: flex;
+          align-items: center;
+          gap: 0.75rem;
+        }
+
+        .summary-item-num {
+          font-size: 0.75rem;
+          font-weight: 700;
+          color: #94a3b8;
+        }
+
+        .summary-item-thumb {
+          width: 40px;
+          height: 40px;
+          border-radius: 6px;
+          object-fit: cover;
+        }
+
+        .summary-item-name {
+          font-size: 0.85rem;
+          font-weight: 700;
+        }
+
+        .summary-item-spec {
+          font-size: 0.75rem;
+        }
+
+        .qty-tag {
+          font-size: 0.75rem;
+          font-weight: 700;
+          padding: 3px 8px;
+          border-radius: 4px;
+          background: rgba(249, 115, 22, 0.15);
+          color: #F97316;
+        }
+
+        .next-steps-banner {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          padding: 0.85rem 1.15rem;
+          border-radius: 9px;
+          border: 1px solid;
+          font-size: 0.82rem;
+          line-height: 1.45;
+          margin-bottom: 1.5rem;
+          text-align: left;
+        }
+
+        .success-actions {
+          display: flex;
+          align-items: center;
+          gap: 1rem;
+          flex-wrap: wrap;
+        }
+
+        .btn-browse-more {
+          background: #F97316;
+          color: #ffffff;
+          padding: 0.65rem 1.5rem;
+          border-radius: 8px;
+          font-weight: 700;
+          font-size: 0.85rem;
+          text-decoration: none;
+        }
+
+        .btn-return-home {
+          padding: 0.65rem 1.5rem;
+          border-radius: 8px;
+          border: 1px solid;
+          font-weight: 700;
+          font-size: 0.85rem;
+          text-decoration: none;
+        }
+
+        /* ── Catalog Modal ── */
+        .picker-overlay {
+          position: fixed;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background: rgba(0,0,0,0.65);
+          backdrop-filter: blur(4px);
+          z-index: 1100;
+          display: flex;
+          align-items: center;
+          justify-content: center;
           padding: 1rem;
         }
 
-        .modal-content {
-          background: #0b1428;
-          border: 1px solid rgba(255, 255, 255, 0.15);
-          border-radius: 12px;
+        .picker-modal {
           width: 100%;
-          max-width: 640px;
-          max-height: 80vh;
+          max-width: 860px;
+          height: 85vh;
+          max-height: 780px;
+          border-radius: 16px;
+          border: 1px solid;
+          box-shadow: 0 16px 40px rgba(0,0,0,0.3);
           display: flex;
           flex-direction: column;
-          box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+          overflow: hidden;
         }
 
-        .modal-header {
-          padding: 14px 18px;
-          border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        .picker-header {
+          padding: 1.25rem 1.5rem;
+          border-bottom: 1px solid;
           display: flex;
-          justify-content: space-between;
           align-items: center;
+          justify-content: space-between;
         }
 
-        .modal-title {
-          font-size: 1rem;
-          font-weight: 700;
-          color: #ffffff;
+        .picker-title {
+          font-size: 1.1rem;
+          font-weight: 800;
           margin: 0;
         }
 
-        .modal-sub {
-          font-size: 0.75rem;
-          color: #94a3b8;
+        .picker-sub {
+          font-size: 0.78rem;
           display: block;
           margin-top: 2px;
         }
 
-        .modal-close-btn {
-          background: none;
+        .btn-close-picker {
+          background: transparent;
           border: none;
-          color: #94a3b8;
-          font-size: 16px;
           cursor: pointer;
         }
 
-        .modal-search-wrap {
-          padding: 12px 18px;
-          border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        .picker-filter-bar {
+          padding: 0.85rem 1.5rem;
+          border-bottom: 1px solid;
+          display: flex;
+          flex-direction: column;
+          gap: 0.65rem;
         }
 
-        .modal-search-input {
-          width: 100%;
-          background: rgba(255, 255, 255, 0.05);
-          border: 1px solid rgba(255, 255, 255, 0.15);
-          border-radius: 6px;
-          padding: 7px 12px;
-          color: #ffffff;
+        .picker-search-wrap {
+          display: flex;
+          align-items: center;
+          padding: 0.45rem 0.85rem;
+          border-radius: 8px;
+          border: 1px solid;
+          gap: 8px;
+        }
+
+        .picker-search-input {
+          flex: 1;
+          background: transparent;
+          border: none;
           font-size: 0.84rem;
           outline: none;
         }
 
-        .modal-products-grid {
-          padding: 14px 18px;
-          overflow-y: auto;
-          display: flex;
-          flex-direction: column;
-          gap: 10px;
+        .btn-clear-search {
+          background: transparent;
+          border: none;
+          cursor: pointer;
+          color: #94a3b8;
         }
 
-        .picker-product-card {
+        .picker-cats-scroll {
           display: flex;
           align-items: center;
-          gap: 12px;
-          background: rgba(255, 255, 255, 0.03);
-          border: 1px solid rgba(255, 255, 255, 0.08);
-          border-radius: 8px;
-          padding: 8px 12px;
-          transition: background 0.2s;
+          gap: 6px;
+          overflow-x: auto;
+          padding-bottom: 2px;
         }
 
-        .picker-product-card:hover {
-          background: rgba(255, 255, 255, 0.06);
-        }
-
-        .picker-img {
-          width: 44px;
-          height: 44px;
+        .picker-cat-pill {
+          padding: 4px 10px;
           border-radius: 6px;
-          object-fit: cover;
-          background: rgba(0, 0, 0, 0.2);
-        }
-
-        .picker-info {
-          flex: 1;
-          min-width: 0;
-        }
-
-        .picker-name {
-          font-size: 0.85rem;
-          font-weight: 700;
-          color: #ffffff;
-          margin: 0;
-          white-space: nowrap;
-          overflow: hidden;
-          text-overflow: ellipsis;
-        }
-
-        .picker-cat {
-          font-size: 0.7rem;
-          color: #94a3b8;
-          display: block;
-        }
-
-        .picker-price {
-          font-size: 0.76rem;
-          color: #fb923c;
-          font-weight: 700;
-        }
-
-        .btn-picker-add {
-          background: #f97316;
-          color: #ffffff;
-          border: none;
-          border-radius: 6px;
-          padding: 6px 12px;
-          font-size: 0.78rem;
+          border: 1px solid;
+          font-size: 0.73rem;
           font-weight: 700;
           cursor: pointer;
           white-space: nowrap;
+          transition: all 0.15s;
         }
 
-        .btn-picker-add.added {
-          background: rgba(249, 115, 22, 0.2);
-          color: #fb923c;
-          border: 1px solid rgba(249, 115, 22, 0.4);
+        .picker-body {
+          flex: 1;
+          overflow-y: auto;
+          padding: 1.25rem 1.5rem;
         }
 
-        /* ── Thank You Card ── */
-        .thank-you-card {
-          max-width: 520px;
-          margin: 0 auto;
-          background: rgba(15, 23, 42, 0.75);
-          border: 1px solid rgba(255, 255, 255, 0.14);
-          border-radius: 14px;
-          padding: 2.5rem 1.8rem;
-          text-align: center;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
+        .picker-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
           gap: 1rem;
         }
 
-        .thank-icon {
-          width: 68px;
-          height: 68px;
-          border-radius: 50%;
-          background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+        .picker-product-card {
+          border-radius: 12px;
+          border: 1px solid;
+          overflow: hidden;
+          display: flex;
+          flex-direction: column;
+          transition: transform 0.18s, border-color 0.18s;
+        }
+
+        .picker-product-card:hover {
+          transform: translateY(-2px);
+        }
+
+        .picker-thumb {
+          width: 100%;
+          height: 120px;
+          object-fit: cover;
+          background: #f1f5f9;
+        }
+
+        .picker-info {
+          padding: 0.85rem;
+          display: flex;
+          flex-direction: column;
+          gap: 0.45rem;
+          flex: 1;
+        }
+
+        .picker-badge-row {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+        }
+
+        .brand-pill-sm {
+          background: #F97316;
+          color: #ffffff;
+          font-size: 0.65rem;
+          font-weight: 800;
+          padding: 1px 6px;
+          border-radius: 3px;
+          text-transform: uppercase;
+        }
+
+        .cat-pill-sm {
+          font-size: 0.7rem;
+          font-weight: 600;
+          text-transform: capitalize;
+        }
+
+        .picker-name {
+          font-size: 0.875rem;
+          font-weight: 700;
+          margin: 0;
+          line-height: 1.3;
+          display: -webkit-box;
+          -webkit-line-clamp: 2;
+          -webkit-box-orient: vertical;
+          overflow: hidden;
+        }
+
+        .btn-picker-add {
+          margin-top: auto;
+          padding: 0.45rem;
+          border-radius: 7px;
+          border: none;
+          background: #F97316;
+          color: #ffffff;
+          font-size: 0.78rem;
+          font-weight: 700;
+          cursor: pointer;
           display: flex;
           align-items: center;
           justify-content: center;
-          box-shadow: 0 0 0 10px rgba(22, 163, 74, 0.18);
+          gap: 5px;
+          transition: all 0.15s;
         }
 
-        .thank-heading {
-          font-size: 1.6rem;
-          font-weight: 800;
-          color: #ffffff;
-          margin: 0;
+        .btn-picker-add:hover {
+          background: #ea580c;
         }
 
-        .thank-desc {
-          font-size: 0.88rem;
-          color: #94a3b8;
-          margin: 0;
+        .btn-picker-add.btn-added {
+          background: #22c55e;
+          box-shadow: 0 2px 6px rgba(34, 197, 94, 0.3);
         }
 
-        .enquiry-id-box {
-          background: rgba(255, 255, 255, 0.06);
-          border: 1px solid rgba(255, 255, 255, 0.15);
-          border-radius: 8px;
-          padding: 6px 14px;
+        .picker-empty {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          padding: 3rem 1rem;
+          gap: 0.75rem;
+        }
+
+        .picker-footer {
+          padding: 1rem 1.5rem;
+          border-top: 1px solid;
           display: flex;
           align-items: center;
-          gap: 8px;
+          justify-content: space-between;
         }
 
-        .enquiry-id-label { font-size: 0.78rem; color: #94a3b8; }
-        .enquiry-id-value { font-size: 0.95rem; color: #fb923c; font-family: monospace; }
-        .btn-copy-id {
-          background: rgba(255, 255, 255, 0.1);
-          border: 1px solid rgba(255, 255, 255, 0.2);
+        .footer-count {
+          font-size: 0.82rem;
+          font-weight: 600;
+        }
+
+        .btn-picker-done {
+          background: #22c55e;
           color: #ffffff;
-          border-radius: 4px;
-          padding: 2px 7px;
-          font-size: 11px;
+          border: none;
+          padding: 0.55rem 1.3rem;
+          border-radius: 8px;
+          font-size: 0.84rem;
+          font-weight: 700;
           cursor: pointer;
         }
 
-        .thank-summary-box {
-          width: 100%;
-          background: rgba(0, 0, 0, 0.2);
-          border-radius: 8px;
-          padding: 10px 14px;
-          display: flex;
-          flex-direction: column;
-          gap: 6px;
-          text-align: left;
-        }
-
-        .thank-summary-row {
-          display: flex;
-          justify-content: space-between;
-          font-size: 0.82rem;
-          color: #cbd5e1;
-        }
-
-        .thank-followup {
-          font-size: 0.82rem;
-          color: #86efac;
-          margin: 0;
-        }
-
-        .btn-back-home {
-          background: #ffffff;
-          color: #ea580c;
-          border-radius: 6px;
-          padding: 0.65rem 1.4rem;
-          font-size: 0.85rem;
-          font-weight: 700;
-          text-decoration: none;
-        }
-
-        .btn-explore-catalog {
-          background: rgba(255, 255, 255, 0.1);
-          color: #ffffff;
-          border: 1px solid rgba(255, 255, 255, 0.2);
-          border-radius: 6px;
-          padding: 0.65rem 1.4rem;
-          font-size: 0.85rem;
-          font-weight: 700;
-          text-decoration: none;
-        }
-
         /* ── Responsive ── */
-        @media (max-width: 860px) {
-          .quote-grid-layout {
+        @media (max-width: 768px) {
+          .enquiry-page {
+            padding: 1.5rem 1rem 4rem;
+          }
+          .details-drawer {
+            max-width: 100%;
+          }
+          .form-grid-2 {
             grid-template-columns: 1fr;
           }
-          .quote-items-list {
-            max-height: none;
+          .chip-options-grid {
+            grid-template-columns: 1fr;
+          }
+          .card-top-row {
+            flex-direction: row;
+          }
+          .product-thumb {
+            width: 58px;
+            height: 58px;
+          }
+          .col-header-actions {
+            width: 100%;
+          }
+          .btn-open-picker, .btn-trigger-drawer {
+            flex: 1;
+            justify-content: center;
+          }
+          .bottom-instruments-actions {
+            flex-direction: column;
+            align-items: stretch;
           }
         }
 
-        @media (max-width: 520px) {
-          .enquiry-page {
-            padding: 1.5rem 0.85rem 3rem;
-          }
-          .form-two-col {
+        @media (max-width: 480px) {
+          .picker-grid {
             grid-template-columns: 1fr;
+          }
+          .enquiry-container {
+            height: calc(100vh - 80px);
+            max-height: calc(100vh - 80px);
           }
         }
       `}</style>

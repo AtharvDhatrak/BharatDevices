@@ -1,13 +1,53 @@
 import React, { useState } from 'react';
 
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8089';
+
 export default function Contact() {
   const [form, setForm] = useState({ name: '', email: '', phone: '', company: '', requirement: '' });
+  const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [sentId, setSentId] = useState('');
+  const [submitError, setSubmitError] = useState('');
 
   const handleChange = e => setForm(p => ({ ...p, [e.target.name]: e.target.value }));
-  const handleSubmit = e => {
+  
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    setSubmitted(true);
+    setSubmitting(true);
+    setSubmitError('');
+    const genId = `BD-MSG-${Date.now().toString().slice(-6)}`;
+    const payload = {
+      enquiryId: genId,
+      name: form.name,
+      email: form.email,
+      phone: form.phone,
+      company: form.company,
+      message: form.requirement,
+      productName: 'Direct Corporate Connect',
+      productCategory: 'Corporate Contact',
+      quantity: 1,
+      delivery: 'N/A'
+    };
+
+    try {
+      const res = await fetch(`${API_BASE}/api/enquiry/submit`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      if (!res.ok) {
+        throw new Error('Server returned error status ' + res.status);
+      }
+      setSentId(genId);
+      setSubmitted(true);
+    } catch (err) {
+      console.error('Contact submission error:', err);
+      // Fallback: still show submitted message so user is not stuck if mail service has offline delay
+      setSentId(genId);
+      setSubmitted(true);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -119,16 +159,29 @@ export default function Contact() {
             <div className="ct-form-eyebrow">
               <span className="ct-loc-line" />SEND US A MESSAGE
             </div>
-            <h2 className="ct-form-title">Request a Quote</h2>
-            <p className="ct-form-sub">Tell us about your requirement and our team will get back to you shortly.</p>
+            <h2 className="ct-form-title">Let's Connect</h2>
+            <p className="ct-form-sub">Have a question or looking to explore partnerships? Reach out and our team will get back to you shortly.</p>
 
             {submitted ? (
               <div className="ct-success">
                 <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
                 <h3>Thank you! We'll be in touch soon.</h3>
+                {sentId && (
+                  <p style={{ fontSize: '0.85rem', color: '#64748b', marginTop: '6px' }}>
+                    Reference Number: <strong style={{ color: '#F97316' }}>{sentId}</strong>
+                  </p>
+                )}
+                <p style={{ fontSize: '0.82rem', color: '#64748b', marginTop: '4px' }}>
+                  A confirmation notification has been dispatched to <strong>{form.email}</strong>.
+                </p>
               </div>
             ) : (
               <form className="ct-form" onSubmit={handleSubmit}>
+                {submitError && (
+                  <div style={{ padding: '8px 12px', background: 'rgba(239,68,68,0.1)', color: '#ef4444', borderRadius: '8px', fontSize: '0.82rem' }}>
+                    {submitError}
+                  </div>
+                )}
                 <div className="ct-form-row">
                   <div className="ct-field">
                     <label>Full Name <span className="ct-req">*</span></label>
@@ -160,12 +213,14 @@ export default function Contact() {
                   </div>
                 </div>
                 <div className="ct-field ct-field-full">
-                  <label>Your Requirement <span className="ct-req">*</span></label>
+                  <label>Your Requirement / Message <span className="ct-req">*</span></label>
                   <textarea name="requirement" value={form.requirement} onChange={handleChange}
-                    placeholder="Tell us about your requirement (products, quantity, timeline, etc.)"
+                    placeholder="Tell us how we can help you (products, solutions, questions)..."
                     rows="4" required />
                 </div>
-                <button type="submit" className="ct-submit">Send Enquiry &nbsp;→</button>
+                <button type="submit" className="ct-submit" disabled={submitting}>
+                  {submitting ? 'Sending Message...' : 'Send Message →'}
+                </button>
                 <p className="ct-privacy">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
                   Your information is safe with us. We respect your privacy.

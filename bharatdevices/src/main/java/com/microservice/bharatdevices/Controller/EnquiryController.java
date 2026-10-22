@@ -27,7 +27,10 @@ public class EnquiryController {
         try {
             // Save to database
             Enquiry enquiry = new Enquiry();
-            enquiry.setEnquiryId(request.getEnquiryId());
+            String enquiryId = (request.getEnquiryId() != null && !request.getEnquiryId().trim().isEmpty())
+                    ? request.getEnquiryId().trim()
+                    : "BD-RFQ-" + System.currentTimeMillis();
+            enquiry.setEnquiryId(enquiryId);
             enquiry.setName(request.getName());
             enquiry.setCompany(request.getCompany());
             enquiry.setEmail(request.getEmail());
@@ -67,6 +70,13 @@ public class EnquiryController {
     @GetMapping("/all")
     public ResponseEntity<?> getAllEnquiries() {
         return ResponseEntity.ok(enquiryRepository.findAllByOrderBySubmittedAtDesc());
+    }
+
+    @GetMapping("/{enquiryId}")
+    public ResponseEntity<?> getEnquiryById(@PathVariable String enquiryId) {
+        return enquiryRepository.findById(enquiryId)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
     }
 
     @PutMapping("/{enquiryId}/status")

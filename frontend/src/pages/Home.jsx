@@ -6,7 +6,7 @@ import BusinessSolutions from '../components/BusinessSolutions';
 import WhyChooseUs from '../components/WhyChooseUs';
 export default function Home() {
   return (
-    <main style={{ width: '100%', background: '#f8fafc' }}>
+    <main className="home-main">
       <Hero />
       <TrustBadges />
       <ShopByCategory />

@@ -434,7 +434,7 @@ export default function AdminProductsTable() {
         <AdminTopbar
           user={{ name: localStorage.getItem("userName") || "Admin User", avatar: null }}
           onSearch={(query) => setSearchQuery(query)}
-          onLogout={() => { localStorage.clear(); navigate("/login"); }}
+          onLogout={() => { localStorage.clear(); sessionStorage.clear(); navigate("/", { replace: true }); }}
         />
 
         <div style={styles.content}>

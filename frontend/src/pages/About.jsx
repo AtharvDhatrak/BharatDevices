@@ -185,34 +185,36 @@ export default function About() {
       </section>
 
       {/* ── Who We Are ── */}
-      <section className="ab-section ab-who">
-        <div className="ab-who-img-wrap">
-          <img src="/about-hero.png" alt="Bharat Devices Office" className="ab-who-img" />
-          <div className="ab-who-img-overlay">
-            <span>PEOPLE</span>
-            <span>PRODUCTS</span>
-            <span>SOLUTIONS</span>
-            <span className="ab-orange-text">A BRIGHTER TOMORROW</span>
-          </div>
-        </div>
-        <div className="ab-who-text">
-          <span className="ab-label">WHO WE ARE</span>
-          <h2 className="ab-section-title">Your Trusted<br />Technology Partner</h2>
-          <p className="ab-body-text">
-            At Bharat Devices, we believe technology should make businesses more productive,
-            connected and efficient. We provide a comprehensive range of technology products
-            and solutions — from everyday workplace devices to enterprise infrastructure.
-            Our focus is simple: offer genuine products from trusted channels, competitive
-            pricing and responsive customer support that businesses can rely on.
-          </p>
-        </div>
-        <div className="ab-stats">
-          {stats.map((s, i) => (
-            <div key={i} className="ab-stat">
-              <span className="ab-stat-val">{s.value}</span>
-              <span className="ab-stat-label">{s.label}</span>
+      <section className="ab-who-section">
+        <div className="ab-who">
+          <div className="ab-who-img-wrap">
+            <img src="/about-hero.png" alt="Bharat Devices Office" className="ab-who-img" />
+            <div className="ab-who-img-overlay">
+              <span>PEOPLE</span>
+              <span>PRODUCTS</span>
+              <span>SOLUTIONS</span>
+              <span className="ab-orange-text">A BRIGHTER TOMORROW</span>
             </div>
-          ))}
+          </div>
+          <div className="ab-who-text">
+            <span className="ab-label">WHO WE ARE</span>
+            <h2 className="ab-section-title">Your Trusted<br />Technology Partner</h2>
+            <p className="ab-body-text">
+              At Bharat Devices, we believe technology should make businesses more productive,
+              connected and efficient. We provide a comprehensive range of technology products
+              and solutions — from everyday workplace devices to enterprise infrastructure.
+              Our focus is simple: offer genuine products from trusted channels, competitive
+              pricing and responsive customer support that businesses can rely on.
+            </p>
+          </div>
+          <div className="ab-stats">
+            {stats.map((s, i) => (
+              <div key={i} className="ab-stat">
+                <span className="ab-stat-val">{s.value}</span>
+                <span className="ab-stat-label">{s.label}</span>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
 
@@ -488,14 +490,18 @@ export default function About() {
         .ab-center-label { text-align: center; margin-bottom: 2rem; }
 
         /* ── Who We Are ── */
+        .ab-who-section {
+          width: 100%;
+          background: #ffffff;
+          border-bottom: 1px solid #e5e7eb;
+        }
         .ab-who {
           display: grid;
           grid-template-columns: 1fr 1.1fr auto;
           gap: 2.5rem; align-items: center;
           max-width: 1280px; margin: 0 auto;
           padding: 3.5rem 1.5rem;
-          background: #fff;
-          border-bottom: 1px solid #e5e7eb;
+          background: transparent;
         }
         .ab-who-img-wrap { position: relative; border-radius: 14px; overflow: hidden; }
         .ab-who-img { width: 100%; height: 320px; object-fit: cover; display: block; }
@@ -951,6 +957,185 @@ export default function About() {
           .ap-benefit { padding: 12px 6px; }
           .ap-benefit h3 { font-size: 11px; }
           .ab-industries-section { padding: 2.5rem 1rem 2rem; }
+        }
+
+        /* ── Dark Mode Overrides (Admin Portal Palette Alignment) ── */
+        html.dark .about-page,
+        html.dark .ab-main {
+          background-color: #070d1e !important;
+          color: #f8fafc !important;
+        }
+
+        html.dark .ab-section {
+          background: #070d1e !important;
+          border-bottom-color: #192b50 !important;
+        }
+
+        html.dark .ab-who-section {
+          background: #070d1e !important;
+          border-bottom-color: #192b50 !important;
+        }
+
+        html.dark .ab-who {
+          background: transparent !important;
+          border-bottom: none !important;
+        }
+
+        html.dark .ab-section-title {
+          color: #f8fafc !important;
+        }
+
+        html.dark .ab-body-text {
+          color: #94a3b8 !important;
+        }
+
+        html.dark .ab-stat-label {
+          color: #94a3b8 !important;
+        }
+
+        html.dark .ab-offer-section {
+          background: #0b1428 !important;
+          border-bottom: 1px solid #192b50 !important;
+        }
+
+        html.dark .ab-offer-card {
+          background: #0e1830 !important;
+          border-color: #192b50 !important;
+          box-shadow: 0 4px 14px rgba(0,0,0,0.3) !important;
+        }
+
+        html.dark .ab-offer-card:hover {
+          border-color: #F97316 !important;
+          box-shadow: 0 8px 24px rgba(249,115,22,0.2) !important;
+        }
+
+        html.dark .ab-offer-title {
+          color: #f8fafc !important;
+        }
+
+        html.dark .ab-offer-sub {
+          color: #94a3b8 !important;
+        }
+
+        html.dark .ab-why-section {
+          background: #051a10 !important;
+          border-bottom: 1px solid #192b50 !important;
+        }
+
+        html.dark .ab-why-card {
+          background: rgba(14, 24, 48, 0.6) !important;
+          border-color: #192b50 !important;
+        }
+
+        html.dark .ab-why-card:hover {
+          background: rgba(25, 43, 80, 0.8) !important;
+        }
+
+        /* Approach Journey Dark Mode */
+        html.dark .ap-section {
+          background: radial-gradient(circle at 50% 40%, #0d1e3d 0%, #070d1e 60%, #040814 100%) !important;
+          border-bottom: 1px solid #192b50 !important;
+        }
+
+        html.dark .ap-eyebrow {
+          color: #fdba74 !important;
+        }
+
+        html.dark .ap-title {
+          color: #f8fafc !important;
+        }
+
+        html.dark .ap-subtitle {
+          color: #94a3b8 !important;
+        }
+
+        html.dark .ap-step-num {
+          color: rgba(249, 115, 22, 0.35) !important;
+        }
+
+        html.dark .ap-icon-circle {
+          background: #0e1830 !important;
+        }
+
+        html.dark .ap-icon-circle--orange {
+          box-shadow: 0 8px 28px rgba(249,115,22,0.3), 0 0 0 8px rgba(249,115,22,0.12) !important;
+        }
+
+        html.dark .ap-icon-circle--green {
+          box-shadow: 0 8px 28px rgba(34,197,94,0.3), 0 0 0 8px rgba(34,197,94,0.12) !important;
+        }
+
+        html.dark .ap-step-dot {
+          background: #0e1830 !important;
+        }
+
+        html.dark .ap-step-card {
+          background: #0e1830 !important;
+          border-color: #192b50 !important;
+          box-shadow: 0 8px 24px rgba(0,0,0,0.35) !important;
+        }
+
+        html.dark .ap-card-title {
+          color: #f8fafc !important;
+        }
+
+        html.dark .ap-card-desc {
+          color: #94a3b8 !important;
+        }
+
+        html.dark .ap-benefits {
+          background: rgba(14, 24, 48, 0.95) !important;
+          border-color: #192b50 !important;
+          box-shadow: 0 10px 35px rgba(0,0,0,0.4) !important;
+        }
+
+        html.dark .ap-benefit:not(:last-child)::after {
+          background: #192b50 !important;
+        }
+
+        html.dark .ap-benefit h3 {
+          color: #f8fafc !important;
+        }
+
+        /* Industries Section Dark Mode */
+        html.dark .ab-industries-section {
+          background: #070d1e !important;
+          border-bottom: 1px solid #192b50 !important;
+        }
+
+        html.dark .ab-ind-title {
+          color: #f8fafc !important;
+        }
+
+        html.dark .ab-ind-subtitle {
+          color: #94a3b8 !important;
+        }
+
+        html.dark .ab-industry-card {
+          background: #0e1830 !important;
+          border-color: #192b50 !important;
+          box-shadow: 0 4px 14px rgba(0,0,0,0.3) !important;
+        }
+
+        html.dark .ab-industry-card:hover {
+          border-color: #F97316 !important;
+          box-shadow: 0 12px 36px rgba(249,115,22,0.25) !important;
+        }
+
+        html.dark .ab-industry-icon {
+          border-color: #0e1830 !important;
+        }
+
+        html.dark .ab-industry-title {
+          color: #f8fafc !important;
+        }
+
+        html.dark .ab-industry-desc {
+          color: #94a3b8 !important;
+        }
+
+        html.dark .ab-ind-footer-text {
+          color: #64748b !important;
         }
       `}</style>
     </main>

@@ -6,7 +6,17 @@
   box-sizing: border-box;
   margin: 0;
   padding: 0;
-  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+html, body, #root, header, nav, footer, section, aside, main, div, p, span, h1, h2, h3, h4, h5, h6, a, input, select, button {
+  transition: background-color 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+              border-color 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+              color 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+              box-shadow 0.35s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* --- 2. Theme Tokens & Responsive Variables --- */
@@ -112,3 +122,487 @@ input, select, textarea, button {
     gap: 1.5rem;
   }
 }
+
+/* ==========================================================================
+   Comprehensive Dark Mode System (Admin Portal Palette Alignment)
+   Dark Body: #070d1e | Dark Card: #0e1830 | Border: #192b50 | Accent: #F97316
+   ========================================================================== */
+
+html.dark {
+  --bg-primary: #070d1e;
+  --bg-surface: #0e1830;
+  --text-primary: #f8fafc;
+  --text-secondary: #94a3b8;
+  --border-color: #192b50;
+  --card-bg: #0e1830;
+  color-scheme: dark;
+}
+
+html.dark, html.dark body, html.dark #root {
+  background-color: #070d1e !important;
+  color: #f8fafc !important;
+}
+
+html.dark .home-main {
+  background-color: #070d1e !important;
+}
+
+/* ── TopBar Dark ── */
+html.dark .topbar {
+  background: #040814 !important;
+  color: #94a3b8 !important;
+  border-bottom-color: #192b50 !important;
+}
+html.dark .topbar-tagline { color: #64748b !important; }
+html.dark .topbar-item { color: #94a3b8 !important; }
+html.dark .topbar-item:hover { color: #F97316 !important; }
+html.dark .topbar-sep { color: #1e293b !important; }
+html.dark .topbar-dropdown-btn { color: #94a3b8 !important; }
+html.dark .topbar-dropdown-menu {
+  background-color: #0e1830 !important;
+  border-color: #192b50 !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5) !important;
+}
+html.dark .topbar-dropdown-item { color: #e2e8f0 !important; }
+html.dark .topbar-dropdown-item:hover {
+  background-color: #192b50 !important;
+  color: #F97316 !important;
+}
+
+/* ── Navbar Dark ── */
+html.dark .navbar {
+  background: #070d1e !important;
+  border-bottom-color: #192b50 !important;
+}
+html.dark .nav-link { color: #94a3b8 !important; }
+html.dark .nav-link:hover { color: #F97316 !important; }
+html.dark .nav-link--active {
+  color: #F97316 !important;
+  border-bottom-color: #F97316 !important;
+}
+html.dark .navbar-search {
+  background: #0e1830 !important;
+  border-color: #192b50 !important;
+}
+html.dark .navbar-search:focus-within {
+  background: #111d38 !important;
+  border-color: #F97316 !important;
+}
+html.dark .navbar-search-input { color: #f1f5f9 !important; }
+html.dark .navbar-search-input::placeholder { color: #64748b !important; }
+html.dark .hamburger {
+  border-color: #192b50 !important;
+  color: #cbd5e1 !important;
+}
+html.dark .mobile-nav {
+  background: #070d1e !important;
+  border-top-color: #192b50 !important;
+}
+html.dark .mobile-nav-link { color: #94a3b8 !important; }
+html.dark .mobile-nav-link:hover,
+html.dark .mobile-nav-link--active {
+  background: #0e1830 !important;
+  color: #F97316 !important;
+}
+
+/* ── Trust Badges Dark ── */
+html.dark .trust-bar {
+  background: #0b1428 !important;
+  border-bottom-color: #192b50 !important;
+}
+html.dark .trust-title { color: #f8fafc !important; }
+html.dark .trust-desc { color: #94a3b8 !important; }
+html.dark .trust-icon-wrap { background: #132244 !important; }
+html.dark .trust-item:nth-child(2) .trust-icon-wrap,
+html.dark .trust-item:nth-child(4) .trust-icon-wrap {
+  background: rgba(34, 197, 94, 0.15) !important;
+}
+
+/* ── Shop By Category Dark ── */
+html.dark .cat-section {
+  background: #070d1e !important;
+  border-bottom-color: #192b50 !important;
+}
+html.dark .cat-heading { color: #f8fafc !important; }
+html.dark .cat-subheading { color: #94a3b8 !important; }
+html.dark .cat-card {
+  background: #0e1830 !important;
+  border-color: #192b50 !important;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25) !important;
+}
+html.dark .cat-info {
+  background: transparent !important;
+}
+html.dark .cat-card:hover {
+  border-color: #F97316 !important;
+  box-shadow: 0 8px 24px rgba(249, 115, 22, 0.2) !important;
+}
+html.dark .cat-name { color: #f8fafc !important; }
+html.dark .cat-img-wrap { background: #0b1428 !important; }
+html.dark .cat-view-all {
+  background: rgba(249, 115, 22, 0.15) !important;
+  border-color: rgba(249, 115, 22, 0.35) !important;
+  color: #F97316 !important;
+}
+html.dark .cat-card-skeleton {
+  background: #0e1830 !important;
+  border-color: #192b50 !important;
+}
+html.dark .cat-img-skeleton {
+  background: linear-gradient(90deg, #0e1830 25%, #192b50 50%, #0e1830 75%) !important;
+}
+html.dark .cat-text-skeleton {
+  background: #192b50 !important;
+}
+html.dark .cat-empty {
+  background: #0e1830 !important;
+  border-color: #192b50 !important;
+  color: #94a3b8 !important;
+}
+
+/* ── Business Solutions Dark ── */
+html.dark .biz-section {
+  background: #0b1428 !important;
+  border-bottom-color: #192b50 !important;
+}
+html.dark .biz-title { color: #f8fafc !important; }
+html.dark .biz-desc { color: #94a3b8 !important; }
+html.dark .biz-check-item { color: #cbd5e1 !important; }
+html.dark .biz-checklist {
+  background: rgba(14, 24, 48, 0.85) !important;
+  border-color: #192b50 !important;
+}
+
+/* ── Why Choose Us Dark ── */
+html.dark .why-section {
+  background: #070d1e !important;
+  border-bottom-color: #192b50 !important;
+}
+html.dark .why-title { color: #f8fafc !important; }
+html.dark .why-card {
+  background: #0e1830 !important;
+  border-color: #192b50 !important;
+}
+html.dark .why-card:hover {
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4) !important;
+}
+html.dark .why-card-title { color: #f8fafc !important; }
+html.dark .why-card-desc { color: #94a3b8 !important; }
+html.dark .why-icon { background: #132244 !important; }
+html.dark .why-card:nth-child(2) .why-icon,
+html.dark .why-card:nth-child(4) .why-icon {
+  background: rgba(34, 197, 94, 0.15) !important;
+}
+
+/* ── Products Page Dark ── */
+html.dark .products-page {
+  background: #070d1e !important;
+}
+html.dark .products-banner {
+  background: #0b1428 !important;
+  border-bottom-color: #192b50 !important;
+}
+html.dark .banner-title { color: #f8fafc !important; }
+html.dark .banner-desc { color: #94a3b8 !important; }
+html.dark .banner-breadcrumb a { color: #94a3b8 !important; }
+html.dark .banner-breadcrumb span { color: #f8fafc !important; }
+html.dark .filters-sidebar {
+  background: #0e1830 !important;
+  border-color: #192b50 !important;
+}
+html.dark .filters-top { border-bottom-color: #192b50 !important; }
+html.dark .filters-heading { color: #f8fafc !important; }
+html.dark .filter-group { border-bottom-color: #192b50 !important; }
+html.dark .filter-group-title { color: #f8fafc !important; }
+html.dark .filter-group-meta { color: #64748b !important; }
+html.dark .filter-label-text { color: #cbd5e1 !important; }
+html.dark .filter-count { color: #64748b !important; }
+html.dark .brand-search-box {
+  background: #070d1e !important;
+  border-color: #192b50 !important;
+}
+html.dark .brand-search-input { color: #f8fafc !important; }
+html.dark .price-slider-track { background: #192b50 !important; }
+html.dark .price-inputs input {
+  background: #070d1e !important;
+  border-color: #192b50 !important;
+  color: #f8fafc !important;
+}
+html.dark .product-card {
+  background: #0e1830 !important;
+  border-color: #192b50 !important;
+}
+html.dark .product-card:hover {
+  border-color: #F97316 !important;
+}
+html.dark .product-img-wrap { background: #0b1428 !important; }
+html.dark .product-name { color: #f8fafc !important; }
+html.dark .product-brand { color: #F97316 !important; }
+html.dark .spec-item { color: #94a3b8 !important; }
+html.dark .products-count { color: #94a3b8 !important; }
+html.dark .products-count strong { color: #f8fafc !important; }
+html.dark .sort-label { color: #94a3b8 !important; }
+html.dark .sort-select {
+  background: #0e1830 !important;
+  border-color: #192b50 !important;
+  color: #f8fafc !important;
+}
+html.dark .products-grid-header {
+  background: #0e1830 !important;
+  border-color: #192b50 !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3) !important;
+}
+html.dark .view-details-btn {
+  background: #132244 !important;
+  border-color: #192b50 !important;
+  color: #cbd5e1 !important;
+}
+html.dark .view-details-btn:hover {
+  background: #192b50 !important;
+  color: #f8fafc !important;
+}
+html.dark .filter-chip {
+  background: #0e1830 !important;
+  border-color: #192b50 !important;
+  color: #cbd5e1 !important;
+}
+html.dark .active-chips-bar { border-bottom-color: #192b50 !important; }
+html.dark .pagination-bar { border-top-color: #192b50 !important; }
+html.dark .page-btn {
+  background: #0e1830 !important;
+  border-color: #192b50 !important;
+  color: #94a3b8 !important;
+}
+html.dark .page-btn:hover:not(:disabled) {
+  background: #132244 !important;
+  color: #f8fafc !important;
+}
+html.dark .page-btn.page-active {
+  background: #F97316 !important;
+  border-color: #F97316 !important;
+  color: #ffffff !important;
+}
+html.dark .filter-sheet {
+  background: #0e1830 !important;
+  color: #f8fafc !important;
+}
+html.dark .filter-sheet-header { border-bottom-color: #192b50 !important; }
+html.dark .filter-sheet-title { color: #f8fafc !important; }
+html.dark .mobile-filter-btn {
+  background: #0e1830 !important;
+  border-color: #192b50 !important;
+  color: #cbd5e1 !important;
+}
+
+/* ── Contact Page Dark ── */
+html.dark .ct-page,
+html.dark .ct-mid {
+  background: #070d1e !important;
+}
+html.dark .ct-quick {
+  background: #0b1428 !important;
+  border-color: #192b50 !important;
+}
+html.dark .ct-qcard {
+  border-right-color: #192b50 !important;
+}
+html.dark .ct-qcard:hover {
+  background: #0e1830 !important;
+}
+html.dark .ct-qcard-body h3 { color: #f8fafc !important; }
+html.dark .ct-qcard-body p { color: #94a3b8 !important; }
+html.dark .ct-qcard-arrow { border-color: #192b50 !important; }
+html.dark .ct-loc-title { color: #f8fafc !important; }
+html.dark .ct-loc-sub { color: #94a3b8 !important; }
+html.dark .ct-addr-card {
+  background: #0e1830 !important;
+  border-color: #192b50 !important;
+}
+html.dark .ct-addr-card:hover { border-color: #22c55e !important; }
+html.dark .ct-addr-company { color: #f8fafc !important; }
+html.dark .ct-addr-body p { color: #94a3b8 !important; }
+html.dark .ct-addr-icon { background: rgba(34, 197, 94, 0.15) !important; }
+html.dark .ct-addr-arrow { border-color: #192b50 !important; }
+html.dark .ct-form-card {
+  background: #0e1830 !important;
+  border-color: #192b50 !important;
+}
+html.dark .ct-form-title { color: #f8fafc !important; }
+html.dark .ct-form-sub { color: #94a3b8 !important; }
+html.dark .ct-field label { color: #cbd5e1 !important; }
+html.dark .ct-field input,
+html.dark .ct-field textarea {
+  background: #070d1e !important;
+  border-color: #192b50 !important;
+  color: #f8fafc !important;
+}
+html.dark .ct-field input:focus,
+html.dark .ct-field textarea:focus {
+  border-color: #F97316 !important;
+}
+
+/* ── About Page Dark ── */
+html.dark .about-page,
+html.dark .ab-page,
+html.dark .ab-who-section,
+html.dark .ab-section,
+html.dark .ab-stats,
+html.dark .ab-mid,
+html.dark .ab-process,
+html.dark .ab-offerings {
+  background: #070d1e !important;
+  color: #f8fafc !important;
+}
+html.dark .ab-who {
+  background: transparent !important;
+  border-bottom: none !important;
+}
+html.dark .ab-title,
+html.dark .ab-mid-title,
+html.dark .ab-process-title,
+html.dark .ab-offerings-title {
+  color: #f8fafc !important;
+}
+html.dark .ab-stat-item,
+html.dark .ab-card,
+html.dark .ab-step-card,
+html.dark .ab-offering-card {
+  background: #0e1830 !important;
+  border-color: #192b50 !important;
+}
+html.dark .ab-desc,
+html.dark .ab-mid-sub,
+html.dark .ab-card-desc,
+html.dark .ab-step-desc {
+  color: #94a3b8 !important;
+}
+
+/* ── Footer Dark ── */
+html.dark .ft-root {
+  background: #070d1e !important;
+}
+html.dark .ft-body {
+  background: #070d1e !important;
+  border-color: #192b50 !important;
+}
+html.dark .ft-col-title { color: #f8fafc !important; }
+html.dark .ft-legal { color: #e2e8f0 !important; }
+html.dark .ft-tagline { color: #94a3b8 !important; }
+html.dark .ft-link,
+html.dark .ft-link-plain {
+  color: #94a3b8 !important;
+  border-color: #192b50 !important;
+}
+html.dark .ft-link:hover,
+html.dark .ft-link-plain:hover { color: #F97316 !important; }
+html.dark .ft-addr-text { color: #94a3b8 !important; }
+html.dark .ft-social {
+  background: #0e1830 !important;
+  color: #94a3b8 !important;
+}
+html.dark .ft-social:hover {
+  background: #F97316 !important;
+  color: #ffffff !important;
+}
+html.dark .ft-bottom {
+  background: #040814 !important;
+  border-color: #192b50 !important;
+}
+html.dark .ft-bottom-inner { color: #64748b !important; }
+html.dark .ft-bottom-tagline { color: #64748b !important; }
+
+/* ── Interactive Gust of Wind Page Swap Transition ── */
+.page-transition-wrap {
+  width: 100%;
+  position: relative;
+  animation: gustOfWindSwap 0.42s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  will-change: transform, opacity, filter;
+  transform-origin: 50% 15%;
+}
+
+/* Aerodynamic gust of wind page swap */
+@keyframes gustOfWindSwap {
+  0% {
+    opacity: 0;
+    transform: translateX(42px) skewX(-2deg) scale(0.985);
+    filter: blur(5px);
+  }
+  40% {
+    opacity: 0.9;
+    transform: translateX(-5px) skewX(0.7deg) scale(1.002);
+    filter: blur(0.8px);
+  }
+  75% {
+    transform: translateX(1.5px) skewX(-0.2deg);
+    filter: blur(0);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0) skewX(0) scale(1);
+    filter: blur(0);
+  }
+}
+
+/* Wind Streak Breeze Runner at Top of Page */
+.page-transition-wrap::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 3.5px;
+  background: linear-gradient(90deg, transparent 0%, rgba(34, 197, 94, 0.8) 25%, #F97316 65%, rgba(249, 115, 22, 0.9) 85%, transparent 100%);
+  box-shadow: 0 0 14px rgba(249, 115, 22, 0.65), 0 0 5px rgba(34, 197, 94, 0.4);
+  z-index: 99999;
+  pointer-events: none;
+  animation: gustWindStreak 0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+@keyframes gustWindStreak {
+  0% {
+    transform: translateX(-100%) scaleX(0.4);
+    opacity: 0;
+  }
+  30% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(100%) scaleX(1);
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .page-transition-wrap {
+    animation: simplePageFade 0.2s ease forwards !important;
+  }
+  .page-transition-wrap::before {
+    display: none !important;
+  }
+}
+
+@keyframes simplePageFade {
+  0% { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+/* ── In-Page Search Word Highlight Animation ── */
+.in-page-search-match {
+  outline: 3px solid #F97316 !important;
+  outline-offset: 4px !important;
+  background-color: rgba(249, 115, 22, 0.22) !important;
+  border-radius: 6px !important;
+  animation: searchPulse 2.5s ease forwards !important;
+}
+
+@keyframes searchPulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(249, 115, 22, 0.7);
+  }
+  35% {
+    box-shadow: 0 0 20px 8px rgba(249, 115, 22, 0.5);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(249, 115, 22, 0);
+  }
+}

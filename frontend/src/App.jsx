@@ -1,11 +1,12 @@
 import React, { lazy, Suspense } from 'react';
-import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import { ThemeProvider } from './components/ThemeContext'; 
 
 import TopBar from './components/TopBar';
 import Navbar from './components/Navbar';
 import MobileBottomNav from './components/MobileBottomNav';
 import Footer from './components/Footer';
+import ScrollToTop from './components/ScrollToTop';
 
 const Home = lazy(() => import('./pages/Home'));
 const Products = lazy(() => import('./pages/Products'));
@@ -26,6 +27,14 @@ const Loader = () => (
   </div>
 );
 
+function ProtectedAdminRoute({ children }) {
+  const token = localStorage.getItem('token') || localStorage.getItem('authToken');
+  if (!token) {
+    return <Navigate to="/" replace />;
+  }
+  return children;
+}
+
 function Layout() {
   const { pathname } = useLocation();
   const isAdmin = pathname.startsWith('/admin');
@@ -33,38 +42,43 @@ function Layout() {
 
   if (isAdmin || isLogin) {
     return (
-      <Suspense fallback={<Loader />}>
-        <Routes>
-          <Route path="/login" element={<AuthModal />} />
-          <Route path="/admin/products/add" element={<AdminAddProduct />} />
-          <Route path="/admin/products" element={<AdminAllProducts />} />
-          <Route path="/admin/add-category" element={<AdminAddCategory />} />
-          <Route path="/admin/add-brand" element={<AdminAddBrand />} />
-          <Route path="/admin/products/edit/:id" element={<AdminAddProduct />} />
-          <Route path="/admin/enquiries" element={<AdminEnquiries />} />
-          <Route path="/admin" element={<AdminDashboard />} />
-          <Route path="/admin/:tab/*" element={<AdminDashboard />} />
-        </Routes>
-      </Suspense>
+      <>
+        <ScrollToTop />
+        <Suspense fallback={<Loader />}>
+          <Routes>
+            <Route path="/login" element={<AuthModal />} />
+            <Route path="/admin/products/add" element={<ProtectedAdminRoute><AdminAddProduct /></ProtectedAdminRoute>} />
+            <Route path="/admin/products" element={<ProtectedAdminRoute><AdminAllProducts /></ProtectedAdminRoute>} />
+            <Route path="/admin/add-category" element={<ProtectedAdminRoute><AdminAddCategory /></ProtectedAdminRoute>} />
+            <Route path="/admin/add-brand" element={<ProtectedAdminRoute><AdminAddBrand /></ProtectedAdminRoute>} />
+            <Route path="/admin/products/edit/:id" element={<ProtectedAdminRoute><AdminAddProduct /></ProtectedAdminRoute>} />
+            <Route path="/admin/enquiries" element={<ProtectedAdminRoute><AdminEnquiries /></ProtectedAdminRoute>} />
+            <Route path="/admin" element={<ProtectedAdminRoute><AdminDashboard /></ProtectedAdminRoute>} />
+            <Route path="/admin/:tab/*" element={<ProtectedAdminRoute><AdminDashboard /></ProtectedAdminRoute>} />
+          </Routes>
+        </Suspense>
+      </>
     );
   }
 
   return (
     <>
+      <ScrollToTop />
       <TopBar />
       <Navbar />
       <div style={{ paddingBottom: 'var(--mobile-nav-height, 0)' }}>
-        <Suspense fallback={<Loader />}>
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/products" element={<Products />} />
-            <Route path="/products/:id" element={<ProductDetail />} />
-            
-            <Route path="/enquiry" element={<Enquiry />} />
-            <Route path="/about" element={<About />} />
-            <Route path="/contact" element={<Contact />} />
-          </Routes>
-        </Suspense>
+        <div key={pathname} className="page-transition-wrap">
+          <Suspense fallback={<Loader />}>
+            <Routes>
+              <Route path="/" element={<Home />} />
+              <Route path="/products" element={<Products />} />
+              <Route path="/products/:id" element={<ProductDetail />} />
+              <Route path="/enquiry" element={<Enquiry />} />
+              <Route path="/about" element={<About />} />
+              <Route path="/contact" element={<Contact />} />
+            </Routes>
+          </Suspense>
+        </div>
       </div>
       <Footer />
       <MobileBottomNav />
